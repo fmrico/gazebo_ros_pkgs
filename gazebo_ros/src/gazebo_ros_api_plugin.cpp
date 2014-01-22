@@ -27,10 +27,10 @@ namespace gazebo
 {
 
 GazeboRosApiPlugin::GazeboRosApiPlugin() :
-  physics_reconfigure_initialized_(false),
-  world_created_(false),
+  plugin_loaded_(false),
   stop_(false),
-  plugin_loaded_(false)
+  physics_reconfigure_initialized_(false),
+  world_created_(false)
 {
   robot_namespace_.clear();
 }
@@ -587,7 +587,7 @@ bool GazeboRosApiPlugin::spawnGazeboModel(gazebo_msgs::SpawnModel::Request &req,
                                           gazebo_msgs::SpawnModel::Response &res)
 {
   ROS_WARN_STREAM_NAMED("api_plugin","/gazebo/spawn_gazebo_model is deprecated, use /gazebo/spawn_sdf_model instead");
-  spawnSDFModel(req, res);
+  return spawnSDFModel(req, res);
 }
 
 bool GazeboRosApiPlugin::spawnSDFModel(gazebo_msgs::SpawnModel::Request &req,

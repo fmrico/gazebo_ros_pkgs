@@ -320,7 +320,7 @@ void GazeboRosJointPoseTrajectory::UpdateStates()
       // gzerr << trajectory_index << " : "  << this->points_.size() << "\n";
       if (this->trajectory_index < this->points_.size())
       {
-        ROS_INFO("time [%f] updating configuration [%d/%lu]",
+        ROS_INFO("time [%f] updating configuration [%d/%zu]",
           cur_time.Double(), this->trajectory_index, this->points_.size());
 
         // get reference link pose before updates
@@ -354,7 +354,7 @@ void GazeboRosJointPoseTrajectory::UpdateStates()
         else
         {
           ROS_ERROR("point[%u] in JointTrajectory has different number of"
-                    " joint names[%u] and positions[%lu].",
+                    " joint names[%u] and positions[%zu].",
                     this->trajectory_index, chain_size,
                     this->points_[this->trajectory_index].positions.size());
         }
