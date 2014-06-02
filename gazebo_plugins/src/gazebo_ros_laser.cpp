@@ -25,6 +25,10 @@
 #include <string>
 #include <assert.h>
 
+#include <functional>
+#include <algorithm>
+#include <limits>
+
 #include <gazebo/physics/World.hh>
 #include <gazebo/physics/HingeJoint.hh>
 #include <gazebo/sensors/Sensor.hh>
@@ -189,6 +193,17 @@ void GazeboRosLaser::OnScan(ConstLaserScanStampedPtr &_msg)
   std::copy(_msg->scan().intensities().begin(), 
             _msg->scan().intensities().end(), 
             laser_msg.intensities.begin());
+
+  // According to REP 117, replace:
+  // ranges <= range_min with -Inf
+  // ranges >= range_max with +Inf
+  std::replace_if(laser_msg.ranges.begin(), laser_msg.ranges.end(),
+      std::bind2nd(std::less_equal<float>(), laser_msg.range_min),
+      -std::numeric_limits<float>::infinity());
+  std::replace_if(laser_msg.ranges.begin(), laser_msg.ranges.end(),
+      std::bind2nd(std::greater_equal<float>(), laser_msg.range_max),
+      std::numeric_limits<float>::infinity());
+
   this->pub_queue_->push(laser_msg, this->pub_);
 }
 }
