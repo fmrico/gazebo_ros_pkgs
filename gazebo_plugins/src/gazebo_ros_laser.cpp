@@ -25,6 +25,10 @@
 #include <string>
 #include <assert.h>
 
+#include <functional>
+#include <algorithm>
+#include <limits>
+
 #include <gazebo/physics/World.hh>
 #include <gazebo/physics/HingeJoint.hh>
 #include <gazebo/sensors/Sensor.hh>
@@ -181,14 +185,27 @@ void GazeboRosLaser::OnScan(ConstLaserScanStampedPtr &_msg)
   laser_msg.scan_time = 0;  // not sure whether this is correct
   laser_msg.range_min = _msg->scan().range_min();
   laser_msg.range_max = _msg->scan().range_max();
+
   laser_msg.ranges.resize(_msg->scan().ranges_size());
-  std::copy(_msg->scan().ranges().begin(), 
-            _msg->scan().ranges().end(), 
+  std::copy(_msg->scan().ranges().begin(),
+            _msg->scan().ranges().end(),
             laser_msg.ranges.begin());
+
   laser_msg.intensities.resize(_msg->scan().intensities_size());
-  std::copy(_msg->scan().intensities().begin(), 
-            _msg->scan().intensities().end(), 
+  std::copy(_msg->scan().intensities().begin(),
+            _msg->scan().intensities().end(),
             laser_msg.intensities.begin());
+
+  // According to REP 117, replace:
+  // ranges <= range_min with -Inf
+  // ranges >= range_max with +Inf
+  std::replace_if(laser_msg.ranges.begin(), laser_msg.ranges.end(),
+      std::bind2nd(std::less_equal<float>(), laser_msg.range_min),
+      -std::numeric_limits<float>::infinity());
+  std::replace_if(laser_msg.ranges.begin(), laser_msg.ranges.end(),
+      std::bind2nd(std::greater_equal<float>(), laser_msg.range_max),
+      std::numeric_limits<float>::infinity());
+
   this->pub_queue_->push(laser_msg, this->pub_);
 }
 }
