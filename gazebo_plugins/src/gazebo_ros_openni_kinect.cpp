@@ -340,7 +340,7 @@ bool GazeboRosOpenniKinect::FillPointCloudHelper(
       pcl::PointXYZRGB point;
       point.x      = depth * tan(yAngle);
       point.y      = depth * tan(pAngle);
-      if(depth > this->point_cloud_cutoff_)
+      if (depth > this->point_cloud_cutoff_)
       {
         point.z    = depth;
       }
