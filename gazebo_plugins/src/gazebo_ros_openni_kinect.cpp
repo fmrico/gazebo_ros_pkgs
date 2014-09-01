@@ -99,6 +99,13 @@ void GazeboRosOpenniKinect::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sd
   else
     this->point_cloud_cutoff_ = _sdf->GetElement("pointCloudCutoff")->Get<double>();
 
+  // maximum range to fill in unseeable points
+  // if (range_max_ <= 0.0) we set bad_point (depth image) or NaN (PC)
+  if (!_sdf->GetElement("rangeMax"))
+    this->range_max_ = 0.0;
+  else
+    this->range_max_ = _sdf->GetElement("rangeMax")->Get<double>();
+
   load_connection_ = GazeboRosCameraUtils::OnLoad(boost::bind(&GazeboRosOpenniKinect::Advertise, this));
   GazeboRosCameraUtils::Load(_parent, _sdf);
 }
@@ -339,8 +346,15 @@ bool GazeboRosOpenniKinect::FillPointCloudHelper(
       }
       else //point in the unseeable range
       {
-        point.x = point.y = point.z = std::numeric_limits<float>::quiet_NaN ();
-        point_cloud.is_dense = false;
+        if (depth == 0.0 && range_max_ > 0.0)
+        {
+          point.z = range_max_;
+        }
+        else
+        {
+          point.x = point.y = point.z = std::numeric_limits<float>::quiet_NaN();
+          point_cloud.is_dense = false;
+        }
       }
 
       // put image color data for each point
@@ -409,7 +423,7 @@ bool GazeboRosOpenniKinect::FillDepthImageHelper(
       }
       else //point in the unseeable range
       {
-        dest[i + j * cols_arg] = bad_point;
+        dest[i + j * cols_arg] = depth == 0.0 && range_max_ > 0.0 ? range_max_ : bad_point;
       }
     }
   }
