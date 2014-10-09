@@ -124,6 +124,8 @@ namespace gazebo
 
     private: double point_cloud_cutoff_;
 
+    private: double range_max_;
+
     /// \brief ROS image topic name
     private: std::string point_cloud_topic_name_;
 
