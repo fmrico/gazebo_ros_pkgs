@@ -2,6 +2,20 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adds range_max param
+  Sets the point cloud (PC) and depth images value to range_max when the
+  depth is 0.0 (and < cutoff), since it comes from the far (no) reading.
+  If range_max == 0.0 we set bad_point (depth image) or NaN (PC) as
+  before.
+* sets +Inf and -Inf for ranges outside (min, max)
+  NOTE this follows REP 117
+  http://www.ros.org/reps/rep-0117.html
+* fixes #5352
+* Fixing compilation errors
+* Contributors: Daniel Pinyol, Enrique Fernandez, Jordi Pages
+
 2.3.4 (2013-11-13)
 ------------------
 * Simplify ``gazebo_plugins/CMakeLists.txt``

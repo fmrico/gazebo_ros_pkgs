@@ -2,6 +2,13 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixing compilation errors
+* gazebo_ros_control: upgrade default robot to transmission_loader
+* gazebo_ros_control: upgrade default robot to transmission_loader
+* Contributors: Daniel Pinyol, Enrique Fernandez, Paul Mathieu
+
 2.3.4 (2013-11-13)
 ------------------
 * Merge pull request `#144 <https://github.com/ros-simulation/gazebo_ros_pkgs/issues/144>`_ from meyerj/fix-125

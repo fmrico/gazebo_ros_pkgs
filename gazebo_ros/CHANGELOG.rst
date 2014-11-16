@@ -2,6 +2,11 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixing compilation errors
+* Contributors: Daniel Pinyol, Enrique Fernandez
+
 2.3.4 (2013-11-13)
 ------------------
 * remove debug statement

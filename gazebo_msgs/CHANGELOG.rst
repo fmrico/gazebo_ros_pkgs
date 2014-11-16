@@ -2,6 +2,11 @@
 Changelog for package gazebo_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixes dependencies
+* Contributors: Enrique Fernandez
+
 2.3.4 (2013-11-13)
 ------------------
 
