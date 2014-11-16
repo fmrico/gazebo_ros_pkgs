@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.5 (2014-11-16)
+------------------
 * Fixing compilation errors
 * gazebo_ros_control: upgrade default robot to transmission_loader
 * gazebo_ros_control: upgrade default robot to transmission_loader

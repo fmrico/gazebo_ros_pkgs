@@ -2,8 +2,8 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.5 (2014-11-16)
+------------------
 * Adds range_max param
   Sets the point cloud (PC) and depth images value to range_max when the
   depth is 0.0 (and < cutoff), since it comes from the far (no) reading.

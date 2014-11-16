@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.5 (2014-11-16)
+------------------
 * Fixing compilation errors
 * Contributors: Daniel Pinyol, Enrique Fernandez
 
