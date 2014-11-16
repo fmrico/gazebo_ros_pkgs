@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_updater
 )
 
-include (FindPkgConfig)
+find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
   pkg_check_modules(XML libxml-2.0)
   pkg_check_modules(OGRE OGRE)
