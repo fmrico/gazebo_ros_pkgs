@@ -1,26 +1,26 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gazebo_plugins)
 
-find_package(catkin REQUIRED COMPONENTS 
-  message_generation 
-  gazebo_msgs 
-  roscpp 
-  rospy 
-  nodelet 
-  angles 
-  std_srvs 
-  geometry_msgs 
-  sensor_msgs 
-  nav_msgs 
-  urdf 
-  tf 
-  dynamic_reconfigure 
-  driver_base 
-  rosgraph_msgs 
-  trajectory_msgs 
-  pcl_ros 
+find_package(catkin REQUIRED COMPONENTS
+  message_generation
+  gazebo_msgs
+  roscpp
+  rospy
+  nodelet
+  angles
+  std_srvs
+  geometry_msgs
+  sensor_msgs
+  nav_msgs
+  urdf
+  tf
+  dynamic_reconfigure
+  driver_base
+  rosgraph_msgs
+  trajectory_msgs
+  pcl_ros
   pcl_conversions
-  image_transport 
+  image_transport
   rosconsole
   cv_bridge
   polled_camera
@@ -70,54 +70,54 @@ link_directories(
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES 
-  vision_reconfigure 
-  gazebo_ros_camera_utils 
-  gazebo_ros_camera 
-  gazebo_ros_multicamera 
-  gazebo_ros_depth_camera 
-  gazebo_ros_openni_kinect 
-  gazebo_ros_gpu_laser 
-  gazebo_ros_laser 
-  gazebo_ros_block_laser 
-  gazebo_ros_p3d 
-  gazebo_ros_imu 
-  gazebo_ros_f3d 
-  gazebo_ros_bumper 
-  gazebo_ros_template 
-  gazebo_ros_projector 
-  gazebo_ros_prosilica 
-  gazebo_ros_force 
-  gazebo_ros_joint_trajectory 
+  LIBRARIES
+  vision_reconfigure
+  gazebo_ros_camera_utils
+  gazebo_ros_camera
+  gazebo_ros_multicamera
+  gazebo_ros_depth_camera
+  gazebo_ros_openni_kinect
+  gazebo_ros_gpu_laser
+  gazebo_ros_laser
+  gazebo_ros_block_laser
+  gazebo_ros_p3d
+  gazebo_ros_imu
+  gazebo_ros_f3d
+  gazebo_ros_bumper
+  gazebo_ros_template
+  gazebo_ros_projector
+  gazebo_ros_prosilica
+  gazebo_ros_force
+  gazebo_ros_joint_trajectory
   gazebo_ros_joint_pose_trajectory
   gazebo_ros_diff_drive
   gazebo_ros_skid_steer_drive
   gazebo_ros_video
   gazebo_ros_planar_move
-  
-  CATKIN_DEPENDS 
-  message_generation 
-  gazebo_msgs 
-  roscpp 
-  rospy 
-  nodelet 
-  angles 
-  std_srvs 
-  geometry_msgs 
-  sensor_msgs 
-  nav_msgs 
-  urdf 
-  tf 
-  dynamic_reconfigure 
-  driver_base 
-  rosgraph_msgs 
-  trajectory_msgs 
-  pcl_ros 
+
+  CATKIN_DEPENDS
+  message_generation
+  gazebo_msgs
+  roscpp
+  rospy
+  nodelet
+  angles
+  std_srvs
+  geometry_msgs
+  sensor_msgs
+  nav_msgs
+  urdf
+  tf
+  dynamic_reconfigure
+  driver_base
+  rosgraph_msgs
+  trajectory_msgs
+  pcl_ros
   pcl_conversions
-  image_transport 
+  image_transport
   rosconsole
-  DEPENDS 
-    gazebo 
+  DEPENDS
+    gazebo
     SDF
   )
 
@@ -226,9 +226,9 @@ target_link_libraries(gazebo_ros_planar_move ${GAZEBO_LIBRARIES} ${catkin_LIBRAR
 add_library(gazebo_ros_template src/gazebo_ros_template.cpp)
 target_link_libraries(gazebo_ros_template ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-install(TARGETS 
-  hokuyo_node 
-  vision_reconfigure 
+install(TARGETS
+  hokuyo_node
+  vision_reconfigure
   camera_synchronizer
   gazebo_ros_camera_utils
   gazebo_ros_camera
@@ -253,7 +253,7 @@ install(TARGETS
   gazebo_ros_skid_steer_drive
   gazebo_ros_video
   gazebo_ros_planar_move
-  pub_joint_trajectory_test  
+  pub_joint_trajectory_test
   gazebo_ros_gpu_laser
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
