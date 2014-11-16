@@ -6,14 +6,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   gazebo_ros
   controller_manager
-  hardware_interface 
+  hardware_interface
   transmission_interface
   pluginlib
   joint_limits_interface
   urdf
 )
 
-# Depend on system install of Gazebo 
+# Depend on system install of Gazebo
 find_package(gazebo REQUIRED)
 
 catkin_package(
@@ -21,8 +21,9 @@ catkin_package(
     roscpp
     gazebo_ros
     controller_manager
-    pluginlib
     transmission_interface
+    pluginlib
+    urdf
   INCLUDE_DIRS include
   DEPENDS gazebo
 )
