@@ -4,8 +4,9 @@
   <version>2.3.5</version>
   <description>Interface for using ROS with the <a href="http://gazebosim.org/">Gazebo</a> simulator.</description>
 
-  <maintainer email="hsu@osrfoundation.org">John Hsu</maintainer>
-  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <maintainer email="adolfo.rodriguez@pal-robotics.com">Adolfo Rodriguez Tsouroukdissian</maintainer>
+  <!--maintainer email="hsu@osrfoundation.org">John Hsu</maintainer-->
+  <!--maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer-->
 
   <license>BSD,LGPL,Apache 2.0</license>
 

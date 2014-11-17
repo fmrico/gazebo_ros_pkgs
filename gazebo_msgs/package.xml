@@ -6,7 +6,8 @@
     Message and service data structures for interacting with Gazebo from ROS.
   </description>
 
-  <maintainer email="hsu@osrfoundation.org">John Hsu</maintainer>
+  <maintainer email="adolfo.rodriguez@pal-robotics.com">Adolfo Rodriguez Tsouroukdissian</maintainer>
+  <!--maintainer email="hsu@osrfoundation.org">John Hsu</maintainer-->
 
   <license>BSD</license>
 

@@ -5,8 +5,9 @@
     Robot-independent Gazebo plugins for sensors, motors and dynamic reconfigurable components.
   </description>
 
-  <maintainer email="hsu@osrfoundation.org">John Hsu</maintainer>
-  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <maintainer email="adolfo.rodriguez@pal-robotics.com">Adolfo Rodriguez Tsouroukdissian</maintainer>
+  <!--maintainer email="hsu@osrfoundation.org">John Hsu</maintainer-->
+  <!--maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer-->
 
   <license>BSD</license>
 
