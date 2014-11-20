@@ -1,28 +1,23 @@
 /*
- *  Gazebo - Outdoor Multi-Robot Simulator
- *  Copyright (C) 2003
- *     Nate Koenig & Andrew Howard
+ * Copyright (C) 2012-2014 Open Source Robotics Foundation
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
- */
-
-/* Desc: External interfaces for Gazebo
+*/
+/*
+ * Desc: External interfaces for Gazebo
  * Author: Nate Koenig, John Hsu, Dave Coleman
  * Date: 25 Apr 2010
- * SVN: $Id: main.cc 8598 2010-03-22 21:59:24Z hsujohnhsu $
  */
 
 #ifndef __GAZEBO_ROS_API_PLUGIN_HH__
@@ -251,11 +246,11 @@ private:
   void updateSDFAttributes(TiXmlDocument &gazebo_model_xml, std::string model_name, 
                            gazebo::math::Vector3 initial_xyz, gazebo::math::Quaternion initial_q);
 
-  /// \brief Update the model name and pose of the URDF file before sending to Gazebo
+  /// \brief Update the model pose of the URDF file before sending to Gazebo
   void updateURDFModelPose(TiXmlDocument &gazebo_model_xml, 
                            gazebo::math::Vector3 initial_xyz, gazebo::math::Quaternion initial_q);
 
-  /// \brief
+  /// \brief Update the model name of the URDF file before sending to Gazebo
   void updateURDFName(TiXmlDocument &gazebo_model_xml, std::string model_name);
 
   /// \brief
@@ -288,6 +283,12 @@ private:
 
   /// \brief Connect to Gazebo via its plugin interface, get a pointer to the world, start events
   void loadGazeboRosApiPlugin(std::string world_name);
+
+  /// \brief convert xml to Pose
+  gazebo::math::Pose parsePose(const std::string &str);
+
+  /// \brief convert xml to Pose
+  gazebo::math::Vector3 parseVector3(const std::string &str);
 
   // track if the desconstructor event needs to occur
   bool plugin_loaded_;
