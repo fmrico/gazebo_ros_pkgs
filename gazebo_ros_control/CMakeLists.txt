@@ -25,7 +25,7 @@ catkin_package(
     pluginlib
     urdf
   INCLUDE_DIRS include
-  DEPENDS gazebo
+  DEPENDS GAZEBO
 )
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
