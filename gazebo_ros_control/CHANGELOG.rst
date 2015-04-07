@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.6 (2015-04-07)
+------------------
 * Fixing dependency on gazebo
 * sets PAL maintainer
 * cobalt-2.3.5

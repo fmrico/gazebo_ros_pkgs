@@ -2,8 +2,8 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.6 (2015-04-07)
+------------------
 * Fix ogre dependency
 * Fix sdformat dependency for abi/api checker
 * sets PAL maintainer

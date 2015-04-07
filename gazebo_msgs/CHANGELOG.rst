@@ -2,8 +2,8 @@
 Changelog for package gazebo_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.6 (2015-04-07)
+------------------
 * sets PAL maintainer
 * cobalt-2.3.5
 * updates changelog files
