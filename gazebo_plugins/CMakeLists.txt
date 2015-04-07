@@ -121,6 +121,8 @@ catkin_package(
   DEPENDS
     GAZEBO 
     SDFormat
+    OGRE
+    OGRE-Terrain
   )
 
 ## Executables
