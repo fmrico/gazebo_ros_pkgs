@@ -68,5 +68,6 @@
   <run_depend>message_generation</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>polled_camera</run_depend>
+  <run_depend>sdformat</run_depend>
 
 </package>

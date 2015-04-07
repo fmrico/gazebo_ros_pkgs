@@ -147,7 +147,7 @@ add_definitions(-fPIC) # what is this for?
 ## Plugins
 add_library(gazebo_ros_camera_utils src/gazebo_ros_camera_utils.cpp)
 add_dependencies(gazebo_ros_camera_utils ${PROJECT_NAME}_gencfg)
-target_link_libraries(gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(MultiCameraPlugin src/MultiCameraPlugin.cpp)
 target_link_libraries(MultiCameraPlugin ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -162,20 +162,20 @@ target_link_libraries(gazebo_ros_multicamera gazebo_ros_camera_utils ${GAZEBO_LI
 
 add_library(gazebo_ros_depth_camera src/gazebo_ros_depth_camera.cpp)
 add_dependencies(gazebo_ros_depth_camera ${PROJECT_NAME}_gencfg)
-target_link_libraries(gazebo_ros_depth_camera gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} DepthCameraPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_depth_camera gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} DepthCameraPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_openni_kinect src/gazebo_ros_openni_kinect.cpp)
 add_dependencies(gazebo_ros_openni_kinect ${PROJECT_NAME}_gencfg)
-target_link_libraries(gazebo_ros_openni_kinect gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} DepthCameraPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_openni_kinect gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} DepthCameraPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_gpu_laser src/gazebo_ros_gpu_laser.cpp)
-target_link_libraries(gazebo_ros_gpu_laser ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} GpuRayPlugin)
+target_link_libraries(gazebo_ros_gpu_laser ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} GpuRayPlugin ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_laser src/gazebo_ros_laser.cpp)
-target_link_libraries(gazebo_ros_laser ${GAZEBO_LIBRARIES} RayPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_laser ${GAZEBO_LIBRARIES} RayPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_block_laser src/gazebo_ros_block_laser.cpp)
-target_link_libraries(gazebo_ros_block_laser ${GAZEBO_LIBRARIES} RayPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_block_laser ${GAZEBO_LIBRARIES} RayPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES}) 
 
 add_library(gazebo_ros_p3d src/gazebo_ros_p3d.cpp)
 target_link_libraries(gazebo_ros_p3d ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -188,14 +188,14 @@ target_link_libraries(gazebo_ros_f3d ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${B
 
 add_library(gazebo_ros_bumper src/gazebo_ros_bumper.cpp)
 add_dependencies(gazebo_ros_bumper gazebo_msgs_gencpp)
-target_link_libraries(gazebo_ros_bumper ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ContactPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_bumper ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ContactPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_projector src/gazebo_ros_projector.cpp)
 target_link_libraries(gazebo_ros_projector ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(gazebo_ros_prosilica src/gazebo_ros_prosilica.cpp)
 add_dependencies(gazebo_ros_prosilica ${PROJECT_NAME}_gencfg)
-target_link_libraries(gazebo_ros_prosilica gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} CameraPlugin ${catkin_LIBRARIES})
+target_link_libraries(gazebo_ros_prosilica gazebo_ros_camera_utils ${GAZEBO_LIBRARIES} CameraPlugin ${catkin_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_force src/gazebo_ros_force.cpp)
 target_link_libraries(gazebo_ros_force ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -209,10 +209,10 @@ add_dependencies(gazebo_ros_joint_pose_trajectory gazebo_msgs_gencpp)
 target_link_libraries(gazebo_ros_joint_pose_trajectory ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_library(gazebo_ros_diff_drive src/gazebo_ros_diff_drive.cpp)
-target_link_libraries(gazebo_ros_diff_drive ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(gazebo_ros_diff_drive ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_skid_steer_drive src/gazebo_ros_skid_steer_drive.cpp)
-target_link_libraries(gazebo_ros_skid_steer_drive ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(gazebo_ros_skid_steer_drive ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${SDFormat_LIBRARIES})
 
 add_library(gazebo_ros_video src/gazebo_ros_video.cpp)
 target_link_libraries(gazebo_ros_video ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OGRE_LIBRARIES})
