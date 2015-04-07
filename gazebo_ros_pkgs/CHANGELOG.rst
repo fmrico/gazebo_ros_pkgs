@@ -2,6 +2,13 @@
 Changelog for package gazebo_ros_pkgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* sets PAL maintainer
+* cobalt-2.3.5
+* updates changelog files
+* Contributors: Enrique Fernandez
+
 2.3.5 (2014-11-16)
 ------------------
 

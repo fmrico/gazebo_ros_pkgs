@@ -2,6 +2,17 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixing dependency on gazebo
+* sets PAL maintainer
+* cobalt-2.3.5
+* updates changelog files
+* fixes dependencies
+* Fixing compilation errors
+* gazebo_ros_control: upgrade default robot to transmission_loader
+* Contributors: Daniel Pinyol, Enrique Fernandez, Luca Marchionni, Paul Mathieu
+
 2.3.5 (2014-11-16)
 ------------------
 * Fixing compilation errors

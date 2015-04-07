@@ -2,6 +2,16 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* sets PAL maintainer
+* cobalt-2.3.5
+* updates changelog files
+* uses find_package instead of include
+* configures gazebo_plugins dependency
+* Fixing compilation errors
+* Contributors: Daniel Pinyol, Enrique Fernandez
+
 2.3.5 (2014-11-16)
 ------------------
 * Fixing compilation errors

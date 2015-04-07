@@ -2,6 +2,29 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix ogre dependency
+* Fix sdformat dependency for abi/api checker
+* sets PAL maintainer
+* cobalt-2.3.5
+* updates changelog files
+* uses find_package instead of include
+* removes trailing spaces
+* cosmetics
+* adds range_max param
+  Sets the point cloud (PC) and depth images value to range_max when the
+  depth is 0.0 (and < cutoff), since it comes from the far (no) reading.
+  If range_max == 0.0 we set bad_point (depth image) or NaN (PC) as
+  before.
+* removes trailing spaces and makes code easier to read
+* sets +Inf and -Inf for ranges outside (min, max)
+  NOTE this follows REP 117
+  http://www.ros.org/reps/rep-0117.html
+* fixes #5352
+* Fixing compilation errors
+* Contributors: Daniel Pinyol, Enrique Fernandez, Jordi Pages, Luca Marchionni
+
 2.3.5 (2014-11-16)
 ------------------
 * Adds range_max param
