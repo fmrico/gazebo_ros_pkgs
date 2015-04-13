@@ -2,6 +2,11 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* This fixes orientation for velodyne simulation.
+* Contributors: Bence Magyar
+
 2.3.6 (2015-04-07)
 ------------------
 * Fix ogre dependency

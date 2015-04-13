@@ -2,6 +2,9 @@
 Changelog for package gazebo_ros_pkgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.3.6 (2015-04-07)
 ------------------
 * sets PAL maintainer
