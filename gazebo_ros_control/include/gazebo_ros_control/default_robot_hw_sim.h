@@ -105,8 +105,6 @@ protected:
                            int *const joint_type, double *const lower_limit,
                            double *const upper_limit, double *const effort_limit);*/
 
-//  unsigned int n_dof_; // TODO: Remove
-
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
@@ -114,35 +112,7 @@ protected:
 
   typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
   std::vector<RwResPtr> rw_resources_;
-/*
-  std::vector<internal::JointState>    js_;
-  std::vector<internal::PositionJoint> pj_;
-  std::vector<internal::VelocityJoint> vj_;
 
-  joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
-  joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
-  joint_limits_interface::PositionJointSaturationInterface pj_sat_interface_;
-  joint_limits_interface::PositionJointSoftLimitsInterface pj_limits_interface_;
-  joint_limits_interface::VelocityJointSaturationInterface vj_sat_interface_;
-  joint_limits_interface::VelocityJointSoftLimitsInterface vj_limits_interface_;
-
-  std::vector<std::string> joint_names_;
-  std::vector<int> joint_types_;
-  std::vector<double> joint_lower_limits_;
-  std::vector<double> joint_upper_limits_;
-  std::vector<double> joint_effort_limits_;
-  std::vector<ControlMethod> joint_control_methods_;
-  std::vector<control_toolbox::Pid> pid_controllers_;
-  std::vector<double> joint_position_;
-  std::vector<double> joint_velocity_;
-  std::vector<double> joint_effort_;
-  std::vector<double> joint_effort_command_;
-  std::vector<double> joint_position_command_;
-  std::vector<double> last_joint_position_command_;
-  std::vector<double> joint_velocity_command_;
-
-  std::vector<gazebo::physics::JointPtr> sim_joints_;
-*/
   // e_stop_active_ is true if the emergency stop is active.
   bool e_stop_active_, last_e_stop_active_;
 };
