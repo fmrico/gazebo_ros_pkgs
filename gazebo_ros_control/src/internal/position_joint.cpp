@@ -1,0 +1,215 @@
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2015, PAL Robotics S.L.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//   * Redistributions in binary form must reproduce the above copyright
+//     notice, this list of conditions and the following disclaimer in the
+//     documentation and/or other materials provided with the distribution.
+//   * Neither the name of PAL Robotics S.L. nor the names of its
+//     contributors may be used to endorse or promote products derived from
+//     this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//////////////////////////////////////////////////////////////////////////////
+
+#include <algorithm>
+#include <cassert>
+#include <limits>
+#include <stdexcept>
+
+#include <angles/angles.h>
+#include <control_toolbox/pid.h>
+#include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/joint_state_interface.h>
+#include <hardware_interface/robot_hw.h>
+#include <hardware_interface/internal/demangle_symbol.h>
+#include <joint_limits_interface/joint_limits.h>
+#include <joint_limits_interface/joint_limits_rosparam.h>
+#include <joint_limits_interface/joint_limits_urdf.h>
+#include <ros/node_handle.h>
+
+#include<gazebo_ros_control/internal/position_joint.h>
+
+namespace gazebo_ros_control
+{
+
+namespace internal
+{
+
+PositionJoint::PositionJoint()
+  : JointState(),
+    pos_cmd_(std::numeric_limits<double>::quiet_NaN()),
+    pos_min_(-std::numeric_limits<double>::max()),
+    pos_max_(std::numeric_limits<double>::max()),
+    eff_max_(std::numeric_limits<double>::max()),
+    prev_e_stop_active_(false)
+{}
+
+void PositionJoint::init(const std::string&           joint_name,
+                         const ros::NodeHandle&       nh,
+                         gazebo::physics::ModelPtr    gazebo_model,
+                         const urdf::Model* const     urdf_model,
+                         hardware_interface::RobotHW* robot_hw)
+{
+  // initialize joint state interface
+  JointState::init(joint_name,
+                   nh,
+                   gazebo_model,
+                   urdf_model,
+                   robot_hw);
+
+  //TODO: Remove!
+  name_ = joint_name;
+
+  // ros_control hardware interface
+  namespace hi  = hardware_interface;
+  namespace hii = hi::internal;
+
+  hi::JointStateInterface* js_iface = robot_hw->get<hi::JointStateInterface>();
+  assert(js_iface);                                                 // should be valid
+  hi::JointStateHandle js_handle = js_iface->getHandle(joint_name); // should not throw
+
+  hi::PositionJointInterface* pos_iface = robot_hw->get<hi::PositionJointInterface>();
+  if (!pos_iface)
+  {
+    const std::string msg = "Robot hardware abstraction does not have hardware interface '" +
+                             hii::demangledTypeName<hi::PositionJointInterface>() + "'.";
+    throw std::runtime_error(msg);
+  }
+
+  // resource is already registered in hardware interface
+  if (hasResource(joint_name, *pos_iface))
+  {
+    throw ExistingResourceException();
+  }
+
+  // register resource in ros_control hardware interface
+  hi::JointHandle pos_handle(js_handle, &pos_cmd_);
+  pos_iface->registerHandle(pos_handle);
+
+  // get joint limits, if specified
+  namespace jli = joint_limits_interface;
+  jli::JointLimits limits;
+  jli::SoftJointLimits soft_limits;
+
+  jli::getJointLimits(urdf_joint_, limits);
+  jli::getJointLimits(joint_name, nh, limits);
+
+  if (limits.has_position_limits)
+  {
+    pos_min_ = limits.min_position;
+    pos_max_ = limits.max_position;
+  }
+  if (jli::getSoftJointLimits(urdf_joint_, soft_limits))
+  {
+    pos_min_ = std::max(pos_min_, soft_limits.min_position);
+    pos_max_ = std::min(pos_max_, soft_limits.max_position);
+  }
+  if (limits.has_effort_limits)
+  {
+    eff_max_ = limits.max_effort;
+  }
+
+  // PID spec (optional)
+  const ros::NodeHandle pid_nh(nh, "/gazebo_ros_control/pid_gains/" +joint_name);
+  pid_.reset(new control_toolbox::Pid());
+  const bool has_pid = pid_->init(pid_nh, true); // true == quiet
+  if (has_pid)
+  {
+    ROS_ERROR_STREAM("Found PID configuration for joint '" << joint_name << "'.\n" <<
+                     "It will be used for converting '" <<
+                     hii::demangledTypeName<hi::PositionJointInterface>() << "' commands to effort."); // TODO: Lower severity to debug
+  }
+  else
+  {
+    ROS_ERROR_STREAM("Did not find PID configuration for joint '" << joint_name << "'.\n" <<
+                     "Commands from '" <<
+                     hii::demangledTypeName<hi::PositionJointInterface>() << "' will bypass dynamics."); // TODO: Lower severity to debug
+    pid_.reset();
+
+    // needed when using joint->setPosition() or joint->setVelocity(), not when using joint->SetForce()
+    sim_joint_->SetMaxForce(0, eff_max_);
+  }
+}
+
+void PositionJoint::write(const ros::Time&     /*time*/,
+                          const ros::Duration& period,
+                          bool                 e_stop_active)
+{
+  // TODO: Enforce joint limits?
+
+  // hold joint position if no commands have been sent or if e-stop is active
+  // NOTE: This policy should not be baked-in, but should be an orthogonal design choice instead
+  double pos_cmd;
+  if (std::isnan(pos_cmd_))
+  {
+    // NOTE: This is done only one, but the if is checked every cycle, not very elegant
+    // It would be best to have some sort of start hook to do this
+    pos_cmd_ = pos_;
+  }
+  if (e_stop_active)
+  {
+    if (!prev_e_stop_active_)
+    {
+      hold_pos_cmd_ = pos_;
+      prev_e_stop_active_ = true;
+    }
+    pos_cmd = hold_pos_cmd_;
+  }
+  else
+  {
+    prev_e_stop_active_ = false;
+    pos_cmd = pos_cmd_;
+  }
+
+  if (pid_)
+  {
+    double error;
+    switch (urdf_joint_->type)
+    {
+    case urdf::Joint::REVOLUTE:
+      using namespace angles;
+      shortest_angular_distance_with_limits(pos_,
+                                            pos_cmd,
+                                            pos_min_,
+                                            pos_max_,
+                                            error);
+      break;
+    case urdf::Joint::CONTINUOUS:
+      error = shortest_angular_distance(pos_, pos_cmd);
+      break;
+    default:
+      error = pos_cmd - pos_;
+    }
+
+    const double effort = clamp(pid_->computeCommand(error, period),
+                                -eff_max_, eff_max_);
+    sim_joint_->SetForce(0, effort);
+  }
+  else
+  {
+    #if GAZEBO_MAJOR_VERSION >= 4
+      sim_joint_->SetPosition(0, pos_cmd);
+    #else
+//    ROS_ERROR_STREAM("pos_cmd " << name_ << " " << pos_cmd << ". pos_cmd_ " << pos_cmd_);
+      sim_joint_->SetAngle(0, pos_cmd);
+    #endif
+  }
+}
+
+} // namespace
+
+} // namespace

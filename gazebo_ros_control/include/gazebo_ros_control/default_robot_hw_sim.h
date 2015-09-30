@@ -62,10 +62,12 @@
 
 // gazebo_ros_control
 #include <gazebo_ros_control/robot_hw_sim.h>
+#include <gazebo_ros_control/internal/joint_state.h> // TODO: Don't include explicitly, but let plugins figure it out?
+#include <gazebo_ros_control/internal/position_joint.h>
+#include <gazebo_ros_control/internal/velocity_joint.h>
 
 // URDF
 #include <urdf/model.h>
-
 
 
 namespace gazebo_ros_control
@@ -95,20 +97,27 @@ protected:
   // Register the limits of the joint specified by joint_name and joint_handle. The limits are
   // retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
   // Return the joint's type, lower position limit, upper position limit, and effort limit.
-  void registerJointLimits(const std::string& joint_name,
+  /*void registerJointLimits(const std::string& joint_name,
                            const hardware_interface::JointHandle& joint_handle,
                            const ControlMethod ctrl_method,
                            const ros::NodeHandle& joint_limit_nh,
                            const urdf::Model *const urdf_model,
                            int *const joint_type, double *const lower_limit,
-                           double *const upper_limit, double *const effort_limit);
+                           double *const upper_limit, double *const effort_limit);*/
 
-  unsigned int n_dof_;
+//  unsigned int n_dof_; // TODO: Remove
 
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::VelocityJointInterface vj_interface_;
+
+  typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
+  std::vector<RwResPtr> rw_resources_;
+/*
+  std::vector<internal::JointState>    js_;
+  std::vector<internal::PositionJoint> pj_;
+  std::vector<internal::VelocityJoint> vj_;
 
   joint_limits_interface::EffortJointSaturationInterface   ej_sat_interface_;
   joint_limits_interface::EffortJointSoftLimitsInterface   ej_limits_interface_;
@@ -133,7 +142,7 @@ protected:
   std::vector<double> joint_velocity_command_;
 
   std::vector<gazebo::physics::JointPtr> sim_joints_;
-
+*/
   // e_stop_active_ is true if the emergency stop is active.
   bool e_stop_active_, last_e_stop_active_;
 };

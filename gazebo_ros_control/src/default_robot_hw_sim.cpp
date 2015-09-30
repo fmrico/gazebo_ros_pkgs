@@ -38,19 +38,100 @@
    Desc:   Hardware Interface for any simulated robot in Gazebo
 */
 
-
+#include <stdexcept>
+#include <boost/foreach.hpp>
+#include <transmission_interface/transmission_interface_loader.h>
 #include <gazebo_ros_control/default_robot_hw_sim.h>
 
 
 namespace
 {
+// TODO: Remove!
+//double clamp(const double val, const double min_val, const double max_val)
+//{
+//  return std::min(std::max(val, min_val), max_val);
+//}
 
-double clamp(const double val, const double min_val, const double max_val)
-{
-  return std::min(std::max(val, min_val), max_val);
-}
+//struct JointLoaderData
+//{
+//  JointLoaderData()
+//    : robot_hw(0),
+//      robot_transmissions(0)
+//  {}
 
-}
+//  hardware_interface::RobotHW* robot_hw;     ///< Lifecycle is externally controlled
+//  gazebo::physics::ModelPtr*   gazebo_model; ///< Lifecycle is externally controlled
+//  transmission_interface::JointInterfaces joint_interfaces;
+//  transmission_interface::RawJointDataMap raw_joint_data_map;
+//};
+
+//typedef transmission_interface::TransmissionInfo TransmissionInfo;
+//typedef std::vector<TransmissionInfo> TransmissionInfoList;
+
+//void populateJointStateInterface(const TransmissionInfoList&  tr_info_list,
+//                                 gazebo::physics::ModelPtr    model,
+
+//                                 hardware_interface::RobotHW* robot_hw)
+//{
+//  BOOST_FOREACH(const TransmissionInfo& tr_info, tr_info_list)
+//  {
+//    BOOST_FOREACH(const transmission_interface::JointInfo& joint_info, tr_info.joints_)
+//    {
+//      BOOST_FOREACH(const std::string& hw_iface, joint_info.hardware_interfaces_)
+//      {
+//        if (hw_iface == "hardware_interface/JointStateInterface")
+//        {
+//          gazebo::physics::JointPtr joint = parent_model->GetJoint(joint_names_[j]);
+//          if (!joint)
+//          {
+//            ROS_ERROR_STREAM("This robot has a joint named \"" << joint_names_[j]
+//              << "\" which is not in the gazebo model.");
+//            return false;
+//          }
+//        }
+//        else
+//        {
+//          const std::string msg = "Unsupported hardware interface '" + hw_iface + "'.";
+//          throw std::runtime_error(msg);
+//        }
+//      }
+//    }
+//  }
+//}
+
+//void populateJointStateInterface(const TransmissionInfo& tr_info,
+//                                 gazebo::physics::ModelPtr model,
+//                                 hardware_interface::RobotHW* robot_hw)
+//{
+//  using hardware_interface::JointStateInterface;
+//  using hardware_interface::internal::demangledTypeName;
+
+//  // Transmission joints
+//  std::vector<std::string>
+//  BOOST_FOREACH(const transmission_interface::JointInfo& joint_info, tr_info.joints_)
+//  {
+//    if joint_info.hardware_interfaces_
+//    gazebo::physics::JointPtr joint = parent_model->GetJoint(joint_names_[j]);
+//    if (!joint)
+//    {
+//      ROS_ERROR_STREAM("This robot has a joint named \"" << joint_names_[j]
+//        << "\" which is not in the gazebo model.");
+//      return false;
+//    }
+//  }
+
+//  // Get interface from robot hardware abstraction
+//  JointStateInterface* js_iface = robot_hw->get<JointStateInterface>();
+//  if (!js_iface)
+//  {
+//    const std::string msg = "Robot hardware abstraction does not have hardware interface '" +
+//                            demangledTypeName<JointStateInterface>() + "'.";
+//    throw std::runtime_error(msg);
+//  }
+
+//}
+
+} // namespace
 
 namespace gazebo_ros_control
 {
@@ -63,6 +144,75 @@ bool DefaultRobotHWSim::initSim(
   const urdf::Model *const urdf_model,
   std::vector<transmission_interface::TransmissionInfo> transmissions)
 {
+  // register hardware interfaces
+  // TODO: Automate, so generic interfaces can be added
+  registerInterface(&js_interface_);
+  registerInterface(&ej_interface_);
+  registerInterface(&pj_interface_);
+  registerInterface(&vj_interface_);
+
+  // populate hardware interfaces, bind them to raw Gazebo data
+  namespace ti = transmission_interface;
+  BOOST_FOREACH(const ti::TransmissionInfo& tr_info, transmissions)
+  {
+    BOOST_FOREACH(const ti::JointInfo& joint_info, tr_info.joints_)
+    {
+      BOOST_FOREACH(const std::string& iface_type, joint_info.hardware_interfaces_)
+      {
+        // TODO: Wrap in method for brevity?
+        RwResPtr res;
+        // TODO: A plugin-based approach would do better than this if chain
+        // To do this, move contructor logic to init method, and unify signature
+        if (iface_type == "hardware_interface/JointStateInterface")
+        {
+          res.reset(new internal::JointState());
+        }
+        else if (iface_type == "hardware_interface/PositionJointInterface")
+        {
+          res.reset(new internal::PositionJoint());
+        }
+        else if (iface_type == "hardware_interface/VelocityJointInterface")
+        {
+          res.reset(new internal::VelocityJoint());
+        }
+
+        // initialize and add to list of managed resources
+
+        if (res)
+        {
+          try
+          {
+            res->init(joint_info.name_,
+                      model_nh,
+                      parent_model,
+                      urdf_model,
+                      this);
+            rw_resources_.push_back(res);
+            ROS_ERROR_STREAM("Registered joint '" << joint_info.name_ << "' in hardware interface '" <<
+                             iface_type << "'."); // TODO: Lower severity to debug!
+          }
+          catch (const internal::ExistingResourceException&) {} // resource already added, no problem
+          catch (const std::runtime_error& ex)
+          {
+            ROS_ERROR_STREAM("Failed to initialize gazebo_ros_control plugin.\n" <<
+                             ex.what());
+            return false;
+          }
+          catch(...)
+          {
+            ROS_ERROR_STREAM("Failed to initialize gazebo_ros_control plugin.\n" <<
+                             "Could not add joint '" << joint_info.name_ << "' to hardware interface '" <<
+                             iface_type << "'.");
+            return false;
+          }
+        }
+
+      }
+    }
+  }
+
+  //---------------------
+/*
   // getJointLimits() searches joint_limit_nh for joint limit parameters. The format of each
   // parameter's name is "joint_limits/<joint name>". An example is "joint_limits/axle_joint".
   const ros::NodeHandle joint_limit_nh(model_nh);
@@ -84,6 +234,9 @@ bool DefaultRobotHWSim::initSim(
   joint_velocity_command_.resize(n_dof_);
 
   // Initialize values
+//  populateJointStateInterface(this, transmissions);
+//  populatePositionJointInteface(transmissions);
+
   for(unsigned int j=0; j < n_dof_; j++)
   {
     // Check that this transmission has one joint
@@ -229,7 +382,7 @@ bool DefaultRobotHWSim::initSim(
   registerInterface(&ej_interface_);
   registerInterface(&pj_interface_);
   registerInterface(&vj_interface_);
-
+*/
   // Initialize the emergency stop code.
   e_stop_active_ = false;
   last_e_stop_active_ = false;
@@ -239,6 +392,28 @@ bool DefaultRobotHWSim::initSim(
 
 void DefaultRobotHWSim::readSim(ros::Time time, ros::Duration period)
 {
+  BOOST_FOREACH(RwResPtr res, rw_resources_)
+  {
+    res->read(time, period, e_stop_active_);
+  }
+
+  /*
+  BOOST_FOREACH(internal::JointState& joint_state, js_)
+  {
+    joint_state.read(time, period, e_stop_active_);
+  }
+
+  BOOST_FOREACH(internal::PositionJoint& pos_joint, pj_)
+  {
+    pos_joint.read(time, period, e_stop_active_);
+  }
+
+  BOOST_FOREACH(internal::VelocityJoint& vel_joint, vj_)
+  {
+    vel_joint.read(time, period, e_stop_active_);
+  }
+*/
+  /*
   for(unsigned int j=0; j < n_dof_; j++)
   {
     // Gazebo has an interesting API...
@@ -254,10 +429,32 @@ void DefaultRobotHWSim::readSim(ros::Time time, ros::Duration period)
     joint_velocity_[j] = sim_joints_[j]->GetVelocity(0);
     joint_effort_[j] = sim_joints_[j]->GetForce((unsigned int)(0));
   }
+  */
 }
 
 void DefaultRobotHWSim::writeSim(ros::Time time, ros::Duration period)
 {
+  BOOST_FOREACH(RwResPtr res, rw_resources_)
+  {
+    res->write(time, period, e_stop_active_);
+  }
+  /*
+  BOOST_FOREACH(internal::JointState& joint_state, js_) // TODO: Remove!
+  {
+    joint_state.write(time, period, e_stop_active_);
+  }
+
+  BOOST_FOREACH(internal::PositionJoint& pos_joint, pj_)
+  {
+    pos_joint.write(time, period, e_stop_active_);
+  }
+
+  BOOST_FOREACH(internal::VelocityJoint& vel_joint, vj_)
+  {
+    vel_joint.write(time, period, e_stop_active_);
+  }*/
+
+  /*
   // If the E-stop is active, joints controlled by position commands will maintain their positions.
   if (e_stop_active_)
   {
@@ -343,13 +540,14 @@ void DefaultRobotHWSim::writeSim(ros::Time time, ros::Duration period)
         break;
     }
   }
+  */
 }
 
 void DefaultRobotHWSim::eStopActive(const bool active)
 {
   e_stop_active_ = active;
 }
-
+/*
 // Register the limits of the joint specified by joint_name and joint_handle. The limits are
 // retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
 // Return the joint's type, lower position limit, upper position limit, and effort limit.
@@ -470,8 +668,8 @@ void DefaultRobotHWSim::registerJointLimits(const std::string& joint_name,
         break;
     }
   }
-}
+}*/
 
-}
+} // namespace
 
 PLUGINLIB_EXPORT_CLASS(gazebo_ros_control::DefaultRobotHWSim, gazebo_ros_control::RobotHWSim)
