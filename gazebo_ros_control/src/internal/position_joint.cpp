@@ -37,6 +37,7 @@
 #include <hardware_interface/robot_hw.h>
 #include <hardware_interface/internal/demangle_symbol.h>
 #include <joint_limits_interface/joint_limits.h>
+#include <joint_limits_interface/joint_limits_interface.h>
 #include <joint_limits_interface/joint_limits_rosparam.h>
 #include <joint_limits_interface/joint_limits_urdf.h>
 #include <ros/node_handle.h>
@@ -55,7 +56,7 @@ PositionJoint::PositionJoint()
     pos_min_(-std::numeric_limits<double>::max()),
     pos_max_(std::numeric_limits<double>::max()),
     eff_max_(std::numeric_limits<double>::max()),
-    prev_e_stop_active_(false)
+    prev_in_estop_(false)
 {}
 
 void PositionJoint::init(const std::string&           joint_name,
@@ -70,9 +71,6 @@ void PositionJoint::init(const std::string&           joint_name,
                    gazebo_model,
                    urdf_model,
                    robot_hw);
-
-  //TODO: Remove!
-  name_ = joint_name;
 
   // ros_control hardware interface
   namespace hi  = hardware_interface;
@@ -105,15 +103,16 @@ void PositionJoint::init(const std::string&           joint_name,
   jli::JointLimits limits;
   jli::SoftJointLimits soft_limits;
 
-  jli::getJointLimits(urdf_joint_, limits);
-  jli::getJointLimits(joint_name, nh, limits);
+  const bool has_joint_limits = jli::getJointLimits(urdf_joint_, limits) ||
+                                jli::getJointLimits(joint_name, nh, limits);
+  const bool has_soft_joint_limits = jli::getSoftJointLimits(urdf_joint_, soft_limits);
 
   if (limits.has_position_limits)
   {
     pos_min_ = limits.min_position;
     pos_max_ = limits.max_position;
   }
-  if (jli::getSoftJointLimits(urdf_joint_, soft_limits))
+  if (has_soft_joint_limits)
   {
     pos_min_ = std::max(pos_min_, soft_limits.min_position);
     pos_max_ = std::min(pos_max_, soft_limits.max_position);
@@ -123,8 +122,34 @@ void PositionJoint::init(const std::string&           joint_name,
     eff_max_ = limits.max_effort;
   }
 
+  // TODO: Move to method?
+  // joint limit enforcing
+  // limits enforcement can be ignored for this joint by setting a ROS parameter
+  bool ignore_limits = false;
+  nh.getParam("gazebo_ros_control/joint_limits/ignore_joints/" + joint_name, ignore_limits);
+  if (!ignore_limits && has_joint_limits)
+  {
+    if (has_soft_joint_limits)
+    {
+      soft_limits_handle_.reset(new SoftLimitsHandle(pos_handle, limits, soft_limits));
+      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::PositionJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    }
+    else
+    {
+      sat_limits_handle_.reset(new SatLimitsHandle(pos_handle, limits));
+      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::PositionJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    }
+  }
+  else
+  {
+    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                     hii::demangledTypeName<hi::PositionJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+  }
+
   // PID spec (optional)
-  const ros::NodeHandle pid_nh(nh, "/gazebo_ros_control/pid_gains/" +joint_name);
+  const ros::NodeHandle pid_nh(nh, "gazebo_ros_control/pid_gains/" +joint_name);
   pid_.reset(new control_toolbox::Pid());
   const bool has_pid = pid_->init(pid_nh, true); // true == quiet
   if (has_pid)
@@ -147,10 +172,8 @@ void PositionJoint::init(const std::string&           joint_name,
 
 void PositionJoint::write(const ros::Time&     /*time*/,
                           const ros::Duration& period,
-                          bool                 e_stop_active)
+                          bool                 in_estop)
 {
-  // TODO: Enforce joint limits?
-
   // hold joint position if no commands have been sent or if e-stop is active
   // NOTE: This policy should not be baked-in, but should be an orthogonal design choice instead
   double pos_cmd;
@@ -160,21 +183,45 @@ void PositionJoint::write(const ros::Time&     /*time*/,
     // It would be best to have some sort of start hook to do this
     pos_cmd_ = pos_;
   }
-  if (e_stop_active)
+  if (in_estop)
   {
-    if (!prev_e_stop_active_)
+    if (!prev_in_estop_)
     {
+      // e-stop triggered in this cycle
       hold_pos_cmd_ = pos_;
-      prev_e_stop_active_ = true;
     }
     pos_cmd = hold_pos_cmd_;
   }
   else
   {
-    prev_e_stop_active_ = false;
+    if (prev_in_estop_)
+    {
+      // e-stop released in this cycle
+      // reset joint limit enforcing instances, as they are stateful
+      if (soft_limits_handle_)
+      {
+        soft_limits_handle_->reset();
+      }
+      else if (sat_limits_handle_)
+      {
+        sat_limits_handle_->reset();
+      }
+    }
     pos_cmd = pos_cmd_;
   }
+  prev_in_estop_ = in_estop;
 
+  // enforce joint limits
+  if (soft_limits_handle_)
+  {
+    soft_limits_handle_->enforceLimits(period);
+  }
+  else if (sat_limits_handle_)
+  {
+    sat_limits_handle_->enforceLimits(period);
+  }
+
+  // write command
   if (pid_)
   {
     double error;

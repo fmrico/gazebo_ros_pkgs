@@ -36,6 +36,12 @@ namespace control_toolbox
   class Pid;
 }
 
+namespace joint_limits_interface
+{
+  class VelocityJointSaturationHandle;
+  class VelocityJointSoftLimitsHandle;
+}
+
 namespace gazebo_ros_control
 {
 
@@ -55,14 +61,24 @@ public:
 
   virtual void write(const ros::Time&     time,
                      const ros::Duration& period,
-                     bool                 e_stop_active); // TODO: Invert to simply use active?
+                     bool                 in_estop);
 
 protected:
+  typedef joint_limits_interface::VelocityJointSoftLimitsHandle SoftLimitsHandle;
+  typedef joint_limits_interface::VelocityJointSaturationHandle SatLimitsHandle;
+  typedef boost::shared_ptr<SoftLimitsHandle> SoftLimitsHandlePtr;
+  typedef boost::shared_ptr<SatLimitsHandle> SatLimitsHandlePtr;
+  typedef boost::shared_ptr<control_toolbox::Pid> PidPtr;
+
   double vel_cmd_;
-//  double pos_min_; // TODO: Remove?
-//  double pos_max_;
+  double pos_min_;
+  double pos_max_;
   double eff_max_;
-  boost::shared_ptr<control_toolbox::Pid> pid_;
+
+  PidPtr pid_;
+
+  SatLimitsHandlePtr sat_limits_handle_;
+  SoftLimitsHandlePtr soft_limits_handle_;
 };
 
 } // namespace

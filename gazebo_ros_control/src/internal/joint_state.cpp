@@ -98,7 +98,7 @@ void JointState::init(const std::string&           joint_name,
 
 void JointState::read(const ros::Time&     /*time*/,
                       const ros::Duration& /*period*/,
-                      bool                 /*e_stop_active*/)
+                      bool                 /*in_estop*/)
 {
   using angles::shortest_angular_distance;
 

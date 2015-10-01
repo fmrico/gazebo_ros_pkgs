@@ -37,6 +37,7 @@
 #include <hardware_interface/robot_hw.h>
 #include <hardware_interface/internal/demangle_symbol.h>
 #include <joint_limits_interface/joint_limits.h>
+#include <joint_limits_interface/joint_limits_interface.h>
 #include <joint_limits_interface/joint_limits_rosparam.h>
 #include <joint_limits_interface/joint_limits_urdf.h>
 #include <ros/node_handle.h>
@@ -52,8 +53,8 @@ namespace internal
 VelocityJoint::VelocityJoint()
   : JointState(),
     vel_cmd_(0.0),
-//    pos_min_(-std::numeric_limits<double>::max()), // TODO: Remove?
-//    pos_max_(std::numeric_limits<double>::max()),
+    pos_min_(-std::numeric_limits<double>::max()),
+    pos_max_(std::numeric_limits<double>::max()),
     eff_max_(std::numeric_limits<double>::max())
 {}
 
@@ -100,23 +101,49 @@ void VelocityJoint::init(const std::string&           joint_name,
   jli::JointLimits limits;
   jli::SoftJointLimits soft_limits;
 
-  jli::getJointLimits(urdf_joint_, limits);
-  jli::getJointLimits(joint_name, nh, limits);
+  const bool has_joint_limits = jli::getJointLimits(urdf_joint_, limits) ||
+                                jli::getJointLimits(joint_name, nh, limits);
+  const bool has_soft_joint_limits = jli::getSoftJointLimits(urdf_joint_, soft_limits);
 
-  // TODO: Remove?
-//  if (limits.has_position_limits)
-//  {
-//    pos_min_ = limits.min_position;
-//    pos_max_ = limits.max_position;
-//  }
-//  if (jli::getSoftJointLimits(urdf_joint_, soft_limits))
-//  {
-//    pos_min_ = std::max(pos_min_, soft_limits.min_position);
-//    pos_max_ = std::min(pos_max_, soft_limits.max_position);
-//  }
+  if (limits.has_position_limits)
+  {
+    pos_min_ = limits.min_position;
+    pos_max_ = limits.max_position;
+  }
+  if (has_soft_joint_limits)
+  {
+    pos_min_ = std::max(pos_min_, soft_limits.min_position);
+    pos_max_ = std::min(pos_max_, soft_limits.max_position);
+  }
   if (limits.has_effort_limits)
   {
     eff_max_ = limits.max_effort;
+  }
+
+  // TODO: Move to method?
+  // joint limit enforcing
+  // limits enforcement can be ignored for this joint by setting a ROS parameter
+  bool ignore_limits = false;
+  nh.getParam("gazebo_ros_control/joint_limits/ignore_joints/" + joint_name, ignore_limits);
+  if (!ignore_limits && has_joint_limits)
+  {
+    if (has_soft_joint_limits)
+    {
+      soft_limits_handle_.reset(new SoftLimitsHandle(vel_handle, limits, soft_limits));
+      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    }
+    else
+    {
+      sat_limits_handle_.reset(new SatLimitsHandle(vel_handle, limits));
+      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    }
+  }
+  else
+  {
+    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+                     hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
   }
 
   // PID spec (optional)
@@ -143,14 +170,26 @@ void VelocityJoint::init(const std::string&           joint_name,
 
 void VelocityJoint::write(const ros::Time&     /*time*/,
                           const ros::Duration& period,
-                          bool                 e_stop_active)
+                          bool                 in_estop)
 {
-  // TODO: Enforce joint limits?
+  // NOTE: Currently velocity joint limits enforcing is closed-loop, so no reset is required, as for the position joint
+  // case
+
+  // enforce joint limits
+  if (soft_limits_handle_)
+  {
+    soft_limits_handle_->enforceLimits(period);
+  }
+  else if (sat_limits_handle_)
+  {
+    sat_limits_handle_->enforceLimits(period);
+  }
 
   // stop joint if e-stop is active
   // NOTE: This policy should not be baked-in, but should be an orthogonal design choice instead
-  const double vel_cmd = e_stop_active ? 0.0 : vel_cmd_;
+  const double vel_cmd = in_estop ? 0.0 : vel_cmd_;
 
+  // write command
   if (pid_)
   {
     const double error = vel_cmd - vel_;

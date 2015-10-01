@@ -123,7 +123,6 @@ bool DefaultRobotHWSim::initSim(
 
   // Initialize the emergency stop code.
   e_stop_active_ = false;
-  last_e_stop_active_ = false;
 
   return true;
 }
@@ -150,128 +149,6 @@ void DefaultRobotHWSim::eStopActive(const bool active)
 {
   e_stop_active_ = active;
 }
-/*
-// Register the limits of the joint specified by joint_name and joint_handle. The limits are
-// retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
-// Return the joint's type, lower position limit, upper position limit, and effort limit.
-void DefaultRobotHWSim::registerJointLimits(const std::string& joint_name,
-                         const hardware_interface::JointHandle& joint_handle,
-                         const ControlMethod ctrl_method,
-                         const ros::NodeHandle& joint_limit_nh,
-                         const urdf::Model *const urdf_model,
-                         int *const joint_type, double *const lower_limit,
-                         double *const upper_limit, double *const effort_limit)
-{
-  *joint_type = urdf::Joint::UNKNOWN;
-  *lower_limit = -std::numeric_limits<double>::max();
-  *upper_limit = std::numeric_limits<double>::max();
-  *effort_limit = std::numeric_limits<double>::max();
-
-  joint_limits_interface::JointLimits limits;
-  bool has_limits = false;
-  joint_limits_interface::SoftJointLimits soft_limits;
-  bool has_soft_limits = false;
-
-  if (urdf_model != NULL)
-  {
-    const boost::shared_ptr<const urdf::Joint> urdf_joint = urdf_model->getJoint(joint_name);
-    if (urdf_joint != NULL)
-    {
-      *joint_type = urdf_joint->type;
-      // Get limits from the URDF file.
-      if (joint_limits_interface::getJointLimits(urdf_joint, limits))
-        has_limits = true;
-      if (joint_limits_interface::getSoftJointLimits(urdf_joint, soft_limits))
-        has_soft_limits = true;
-    }
-  }
-  // Get limits from the parameter server.
-  if (joint_limits_interface::getJointLimits(joint_name, joint_limit_nh, limits))
-    has_limits = true;
-
-  if (!has_limits)
-    return;
-
-  if (*joint_type == urdf::Joint::UNKNOWN)
-  {
-    // Infer the joint type.
-
-    if (limits.has_position_limits)
-    {
-      *joint_type = urdf::Joint::REVOLUTE;
-    }
-    else
-    {
-      if (limits.angle_wraparound)
-        *joint_type = urdf::Joint::CONTINUOUS;
-      else
-        *joint_type = urdf::Joint::PRISMATIC;
-    }
-  }
-
-  if (limits.has_position_limits)
-  {
-    *lower_limit = limits.min_position;
-    *upper_limit = limits.max_position;
-  }
-  if (limits.has_effort_limits)
-    *effort_limit = limits.max_effort;
-
-  if (has_soft_limits)
-  {
-    switch (ctrl_method)
-    {
-      case EFFORT:
-        {
-          const joint_limits_interface::EffortJointSoftLimitsHandle
-            limits_handle(joint_handle, limits, soft_limits);
-          ej_limits_interface_.registerHandle(limits_handle);
-        }
-        break;
-      case POSITION:
-        {
-          const joint_limits_interface::PositionJointSoftLimitsHandle
-            limits_handle(joint_handle, limits, soft_limits);
-          pj_limits_interface_.registerHandle(limits_handle);
-        }
-        break;
-      case VELOCITY:
-        {
-          const joint_limits_interface::VelocityJointSoftLimitsHandle
-            limits_handle(joint_handle, limits, soft_limits);
-          vj_limits_interface_.registerHandle(limits_handle);
-        }
-        break;
-    }
-  }
-  else
-  {
-    switch (ctrl_method)
-    {
-      case EFFORT:
-        {
-          const joint_limits_interface::EffortJointSaturationHandle
-            sat_handle(joint_handle, limits);
-          ej_sat_interface_.registerHandle(sat_handle);
-        }
-        break;
-      case POSITION:
-        {
-          const joint_limits_interface::PositionJointSaturationHandle
-            sat_handle(joint_handle, limits);
-          pj_sat_interface_.registerHandle(sat_handle);
-        }
-        break;
-      case VELOCITY:
-        {
-          const joint_limits_interface::VelocityJointSaturationHandle
-            sat_handle(joint_handle, limits);
-          vj_sat_interface_.registerHandle(sat_handle);
-        }
-        break;
-    }
-  }
-}*/
 
 } // namespace
 

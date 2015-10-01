@@ -62,7 +62,9 @@
 
 // gazebo_ros_control
 #include <gazebo_ros_control/robot_hw_sim.h>
-#include <gazebo_ros_control/internal/joint_state.h> // TODO: Don't include explicitly, but let plugins figure it out?
+
+// TODO: Don't include explicitly, but let plugins figure it out?
+#include <gazebo_ros_control/internal/joint_state.h>
 #include <gazebo_ros_control/internal/position_joint.h>
 #include <gazebo_ros_control/internal/velocity_joint.h>
 
@@ -91,20 +93,6 @@ public:
   virtual void eStopActive(const bool active);
 
 protected:
-  // Methods used to control a joint.
-  enum ControlMethod {EFFORT, POSITION, POSITION_PID, VELOCITY, VELOCITY_PID};
-
-  // Register the limits of the joint specified by joint_name and joint_handle. The limits are
-  // retrieved from joint_limit_nh. If urdf_model is not NULL, limits are retrieved from it also.
-  // Return the joint's type, lower position limit, upper position limit, and effort limit.
-  /*void registerJointLimits(const std::string& joint_name,
-                           const hardware_interface::JointHandle& joint_handle,
-                           const ControlMethod ctrl_method,
-                           const ros::NodeHandle& joint_limit_nh,
-                           const urdf::Model *const urdf_model,
-                           int *const joint_type, double *const lower_limit,
-                           double *const upper_limit, double *const effort_limit);*/
-
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
@@ -114,7 +102,7 @@ protected:
   std::vector<RwResPtr> rw_resources_;
 
   // e_stop_active_ is true if the emergency stop is active.
-  bool e_stop_active_, last_e_stop_active_;
+  bool e_stop_active_;
 };
 
 typedef boost::shared_ptr<DefaultRobotHWSim> DefaultRobotHWSimPtr;

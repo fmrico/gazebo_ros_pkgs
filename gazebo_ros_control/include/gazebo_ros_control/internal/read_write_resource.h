@@ -91,11 +91,11 @@ public:
 
   virtual void read(const ros::Time&     /*time*/,
                     const ros::Duration& /*period*/,
-                    bool                 /*e_stop_active*/) {} // TODO: Invert to simply use active?
+                    bool                 /*in_estop*/) {}
 
   virtual void write(const ros::Time&     /*time*/,
                      const ros::Duration& /*period*/,
-                     bool                 /*e_stop_active*/) {}
+                     bool                 /*in_estop*/) {}
 };
 
 } // namespace
