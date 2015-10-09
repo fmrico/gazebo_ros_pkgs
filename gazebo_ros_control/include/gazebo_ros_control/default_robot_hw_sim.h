@@ -69,10 +69,10 @@
 #include <gazebo_ros_control/internal/joint_state.h>
 #include <gazebo_ros_control/internal/position_joint.h>
 #include <gazebo_ros_control/internal/velocity_joint.h>
+#include <gazebo_ros_control/internal/effort_joint.h>
 
 // URDF
 #include <urdf/model.h>
-
 
 namespace gazebo_ros_control
 {

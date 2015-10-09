@@ -146,6 +146,10 @@ bool DefaultRobotHWSim::initSim(
         {
           res.reset(new internal::VelocityJoint());
         }
+        else if (iface_type == "hardware_interface/EffortJointInterface")
+        {
+          res.reset(new internal::EffortJoint());
+        }
 
         // initialize and add to list of managed resources
         if (res)

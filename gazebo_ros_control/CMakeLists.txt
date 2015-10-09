@@ -44,7 +44,8 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_library(default_robot_hw_sim src/default_robot_hw_sim.cpp
                                  src/internal/joint_state.cpp
                                  src/internal/position_joint.cpp
-                                 src/internal/velocity_joint.cpp)
+                                 src/internal/velocity_joint.cpp
+                                 src/internal/effort_joint.cpp)
 target_link_libraries(default_robot_hw_sim ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 ## Install
