@@ -49,13 +49,32 @@ JointState::JointState()
     eff_(0.0)
 {}
 
-void JointState::init(const std::string&           joint_name,
+void JointState::init(const std::string&           resource_name,
                       const ros::NodeHandle&       nh,
                       gazebo::physics::ModelPtr    gazebo_model,
                       const urdf::Model* const     urdf_model,
                       hardware_interface::RobotHW* robot_hw)
 {
   assert(gazebo_model && robot_hw && urdf_model);
+
+  // init resource name
+  name_ = resource_name;
+
+  // cache Gazebo joint
+  sim_joint_ = gazebo_model->GetJoint(resource_name);
+  if (!sim_joint_)
+  {
+    const std::string msg = "Joint '" + resource_name + "' not found in Gazebo model.";
+    throw std::runtime_error(msg);
+  }
+
+  // cache URDF joint
+  urdf_joint_ = urdf_model->getJoint(resource_name);
+  if (!urdf_joint_)
+  {
+    const std::string msg = "URDF model does not contain joint '" + resource_name + "'.";
+    throw std::runtime_error(msg);
+  }
 
   // ros_control hardware interface
   namespace hi  = hardware_interface;
@@ -70,29 +89,17 @@ void JointState::init(const std::string&           joint_name,
   }
 
   // resource is already registered in hardware interface
-  if (hasResource(joint_name, *js_iface))
+  // NOTE: we don't perform this check and bail out earlier, as the initialization
+  // of class members shared with child classes is still relevant. What we want to
+  // actually avoid is adding the resource to the hardware interface multiple times,
+  // as it prints undesired warnings
+  if (hasResource(resource_name, *js_iface))
   {
     throw ExistingResourceException();
   }
 
-  // cache Gazebo joint
-  sim_joint_ = gazebo_model->GetJoint(joint_name);
-  if (!sim_joint_)
-  {
-    const std::string msg = "Joint '" + joint_name + "' not found in Gazebo model.";
-    throw std::runtime_error(msg);
-  }
-
-  // cache URDF joint
-  urdf_joint_ = urdf_model->getJoint(joint_name);
-  if (!urdf_joint_)
-  {
-    const std::string msg = "URDF model does not contain joint '" + joint_name + "'.";
-    throw std::runtime_error(msg);
-  }
-
   // register resource in ros_control hardware interface
-  hi::JointStateHandle js_handle(joint_name, &pos_, &vel_, &eff_);
+  hi::JointStateHandle js_handle(resource_name, &pos_, &vel_, &eff_);
   js_iface->registerHandle(js_handle);
 }
 
@@ -113,6 +120,16 @@ void JointState::read(const ros::Time&     /*time*/,
   }
   vel_ = sim_joint_->GetVelocity(0);
   eff_ = sim_joint_->GetForce(static_cast<unsigned int>(0));
+}
+
+std::vector<std::string> JointState::getHardwareInterfaceTypes()
+{
+  namespace hi  = hardware_interface;
+  namespace hii = hi::internal;
+
+  std::vector<std::string> out;
+  out.push_back(hii::demangledTypeName<hi::JointStateInterface>());
+  return out;
 }
 
 } // namespace

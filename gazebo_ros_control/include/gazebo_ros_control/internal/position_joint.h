@@ -53,7 +53,7 @@ class PositionJoint : public JointState
 public:
   PositionJoint();
 
-  virtual void init(const std::string&                        joint_name,
+  virtual void init(const std::string&                        resource_name,
                     const ros::NodeHandle&                    nh,
                     boost::shared_ptr<gazebo::physics::Model> gazebo_model,
                     const urdf::Model* const                  urdf_model,
@@ -62,6 +62,8 @@ public:
   virtual void write(const ros::Time&     time,
                      const ros::Duration& period,
                      bool                 in_estop);
+
+  virtual std::vector<std::string> getHardwareInterfaceTypes();
 
 protected:
   typedef joint_limits_interface::PositionJointSoftLimitsHandle SoftLimitsHandle;

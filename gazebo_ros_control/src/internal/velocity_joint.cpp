@@ -58,18 +58,22 @@ VelocityJoint::VelocityJoint()
     eff_max_(std::numeric_limits<double>::max())
 {}
 
-void VelocityJoint::init(const std::string&           joint_name,
+void VelocityJoint::init(const std::string&           resource_name,
                          const ros::NodeHandle&       nh,
                          gazebo::physics::ModelPtr    gazebo_model,
                          const urdf::Model* const     urdf_model,
                          hardware_interface::RobotHW* robot_hw)
 {
   // initialize joint state interface
-  JointState::init(joint_name,
-                   nh,
-                   gazebo_model,
-                   urdf_model,
-                   robot_hw);
+  try
+  {
+    JointState::init(resource_name,
+                     nh,
+                     gazebo_model,
+                     urdf_model,
+                     robot_hw);
+  }
+  catch (const internal::ExistingResourceException&) {} // resource already added, no problem
 
   // ros_control hardware interface
   namespace hi  = hardware_interface;
@@ -77,7 +81,7 @@ void VelocityJoint::init(const std::string&           joint_name,
 
   hi::JointStateInterface* js_iface = robot_hw->get<hi::JointStateInterface>();
   assert(js_iface);                                                 // should be valid
-  hi::JointStateHandle js_handle = js_iface->getHandle(joint_name); // should not throw
+  hi::JointStateHandle js_handle = js_iface->getHandle(resource_name); // should not throw
 
   hi::VelocityJointInterface* vel_iface = robot_hw->get<hi::VelocityJointInterface>();
   if (!vel_iface)
@@ -88,7 +92,7 @@ void VelocityJoint::init(const std::string&           joint_name,
   }
 
   // resource is already registered in hardware interface
-  if (hasResource(joint_name, *vel_iface))
+  if (hasResource(resource_name, *vel_iface))
   {
     throw ExistingResourceException();
   }
@@ -102,7 +106,7 @@ void VelocityJoint::init(const std::string&           joint_name,
   jli::SoftJointLimits soft_limits;
 
   const bool has_joint_limits = jli::getJointLimits(urdf_joint_, limits) ||
-                                jli::getJointLimits(joint_name, nh, limits);
+                                jli::getJointLimits(resource_name, nh, limits);
   const bool has_soft_joint_limits = jli::getSoftJointLimits(urdf_joint_, soft_limits);
 
   if (limits.has_position_limits)
@@ -124,47 +128,47 @@ void VelocityJoint::init(const std::string&           joint_name,
   // joint limit enforcing
   // limits enforcement can be ignored for this joint by setting a ROS parameter
   bool ignore_limits = false;
-  nh.getParam("gazebo_ros_control/joint_limits/ignore_joints/" + joint_name, ignore_limits);
+  nh.getParam("joint_limits/ignore_joints/" + resource_name, ignore_limits);
   if (!ignore_limits && has_joint_limits)
   {
     if (has_soft_joint_limits)
     {
       soft_limits_handle_.reset(new SoftLimitsHandle(vel_handle, limits, soft_limits));
-      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
                        hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
     }
     else
     {
       sat_limits_handle_.reset(new SatLimitsHandle(vel_handle, limits));
-      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
                        hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
     }
   }
   else
   {
-    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << joint_name << "' when using the '" <<
+    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
                      hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
   }
 
   // PID spec (optional)
-  const ros::NodeHandle pid_nh(nh, "/gazebo_ros_control/pid_gains/" +joint_name);
+  const ros::NodeHandle pid_nh(nh, "velocity/pid_gains/" + resource_name);
   pid_.reset(new control_toolbox::Pid());
   const bool has_pid = pid_->init(pid_nh, true); // true == quiet
   if (has_pid)
   {
-    ROS_ERROR_STREAM("Found PID configuration for joint '" << joint_name << "'.\n" <<
+    ROS_ERROR_STREAM("Found PID configuration for joint '" << resource_name << "'.\n" <<
                      "It will be used for converting '" <<
                      hii::demangledTypeName<hi::VelocityJointInterface>() << "' commands to effort."); // TODO: Lower severity to debug
   }
   else
   {
-    ROS_ERROR_STREAM("Did not find PID configuration for joint '" << joint_name << "'.\n" <<
+    ROS_ERROR_STREAM("Did not find PID configuration for joint '" << resource_name << "'.\n" <<
                      "Commands from '" <<
                      hii::demangledTypeName<hi::VelocityJointInterface>() << "' will bypass dynamics."); // TODO: Lower severity to debug
     pid_.reset();
 
     // needed when using joint->setPosition() or joint->setVelocity(), not when using joint->SetForce()
-    sim_joint_->SetMaxForce(0, eff_max_);
+    sim_joint_->SetMaxForce(0, eff_max_);  // TODO: Move to start hook
   }
 }
 
@@ -201,6 +205,16 @@ void VelocityJoint::write(const ros::Time&     /*time*/,
   {
     sim_joint_->SetVelocity(0, vel_cmd);
   }
+}
+
+std::vector<std::string> VelocityJoint::getHardwareInterfaceTypes()
+{
+  namespace hi  = hardware_interface;
+  namespace hii = hi::internal;
+
+  std::vector<std::string> out = JointState::getHardwareInterfaceTypes();
+  out.push_back(hii::demangledTypeName<hi::VelocityJointInterface>());
+  return out;
 }
 
 } // namespace

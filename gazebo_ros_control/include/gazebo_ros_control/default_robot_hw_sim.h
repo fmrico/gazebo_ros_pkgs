@@ -34,14 +34,19 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman, Jonathan Bohren
+/* Author: Dave Coleman, Jonathan Bohren, Adolfo Rodriguez Tsouroukdissian
    Desc:   Hardware Interface for any simulated robot in Gazebo
 */
 
 #ifndef _GAZEBO_ROS_CONTROL___DEFAULT_ROBOT_HW_SIM_H_
 #define _GAZEBO_ROS_CONTROL___DEFAULT_ROBOT_HW_SIM_H_
 
-// ros_control
+#include <list>
+#include <map>
+#include <vector>
+
+#include <boost/thread/mutex.hpp>
+
 #include <control_toolbox/pid.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
@@ -50,17 +55,14 @@
 #include <joint_limits_interface/joint_limits_rosparam.h>
 #include <joint_limits_interface/joint_limits_urdf.h>
 
-// Gazebo
 #include <gazebo/common/common.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/gazebo.hh>
 
-// ROS
 #include <ros/ros.h>
 #include <angles/angles.h>
 #include <pluginlib/class_list_macros.h>
 
-// gazebo_ros_control
 #include <gazebo_ros_control/robot_hw_sim.h>
 
 // TODO: Don't include explicitly, but let plugins figure it out?
@@ -75,6 +77,7 @@
 namespace gazebo_ros_control
 {
 
+// TODO: Doc that we currently don't support writing to multiple interfaces at the same time
 class DefaultRobotHWSim : public gazebo_ros_control::RobotHWSim
 {
 public:
@@ -87,10 +90,14 @@ public:
     std::vector<transmission_interface::TransmissionInfo> transmissions);
 
   virtual void readSim(ros::Time time, ros::Duration period);
-
   virtual void writeSim(ros::Time time, ros::Duration period);
 
   virtual void eStopActive(const bool active);
+
+  virtual bool canSwitch(const std::list<hardware_interface::ControllerInfo>&start_list,
+                         const std::list<hardware_interface::ControllerInfo>& stop_list) const;
+  virtual void doSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                        const std::list<hardware_interface::ControllerInfo>& stop_list);
 
 protected:
   hardware_interface::JointStateInterface    js_interface_;
@@ -99,13 +106,41 @@ protected:
   hardware_interface::VelocityJointInterface vj_interface_;
 
   typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
-  std::vector<RwResPtr> rw_resources_;
+  std::list<RwResPtr> rw_resources_; ///< available read and/or write resources resources
+  std::list<RwResPtr> active_w_resources_rt_; ///< subset of available resources currently writing control commands
+  mutable std::list<RwResPtr> active_w_resources_nrt_; // TODO: Remove mutable in jade
 
-  // e_stop_active_ is true if the emergency stop is active.
-  bool e_stop_active_;
+  std::map<std::string, RwResPtr> default_active_resources_; ///< Resources to activate when no controllers are running (if any)
+  // TODO: Add parameter to disable default active resources
+
+  bool e_stop_active_; ///< Evaluates to true when in e-stop
+  bool mode_switch_enabled_; ///< Evaluates to true when joint mode switching is enabled // TODO: Remove!
+
+  typedef std::vector<transmission_interface::TransmissionInfo> TransmissionInfoList;
+  TransmissionInfoList transmission_infos_; ///< Used to reason about mode switching
+
+  mutable boost::mutex mutex_; // TODO: Remove mutable in jade
+
+  /**
+   * \brief initialize the list of resources writing control commands.
+   *
+   * The subet of resources that write control commands is updated every time
+   * new controllers are started or stopped, but on robot initialization no
+   * controllers are running. This method determines which resources should be
+   * active by default on robot innitialization, so defined behavior like
+   * position holding is achieved, instead of the robot falling down.
+   *
+   * The exact behavior for each resource is determined by the respective
+   * \ref ReadWriteResource specialization. When multiple control modes are
+   * available for a given resource, this method tries to make an educated
+   * guess, which by default amounts to activate a position-controlled interface
+   * if available, else a velocity-controlled interface.
+   *
+   * If a different behavior is desired, the method can be specialized.
+   *
+   */
+  virtual void initActiveWriteResources();
 };
-
-typedef boost::shared_ptr<DefaultRobotHWSim> DefaultRobotHWSimPtr;
 
 }
 

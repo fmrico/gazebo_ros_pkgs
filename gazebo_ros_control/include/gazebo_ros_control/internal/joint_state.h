@@ -56,7 +56,7 @@ public:
   JointState();
 
   // TODO doc requisite: RobotHW must contain interface
-  virtual void init(const std::string&                        joint_name,
+  virtual void init(const std::string&                        resource_name,
                     const ros::NodeHandle&                    nh,
                     boost::shared_ptr<gazebo::physics::Model> gazebo_model,
                     const urdf::Model* const                  urdf_model,
@@ -66,7 +66,12 @@ public:
                     const ros::Duration& period,
                     bool                 in_estop);
 
+  virtual std::vector<std::string> getHardwareInterfaceTypes();
+
+  virtual std::string getName() const {return name_;}
+
 protected:
+  std::string name_;
   double pos_;
   double vel_;
   double eff_;

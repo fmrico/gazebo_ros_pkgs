@@ -38,14 +38,72 @@
    Desc:   Hardware Interface for any simulated robot in Gazebo
 */
 
+#include <algorithm>
+#include <cassert>
+#include <set>
 #include <stdexcept>
+
 #include <boost/foreach.hpp>
+
 #include <transmission_interface/transmission_interface_loader.h>
 #include <gazebo_ros_control/default_robot_hw_sim.h>
 
-namespace gazebo_ros_control
+namespace
 {
 
+/**
+ * \return Map of all (resource name, hw interface) pairs claimed by the input controllers.
+ */
+std::map<std::string, std::vector<std::string> > getResources(const std::list<hardware_interface::ControllerInfo>& ctrls)
+{
+  std::map<std::string, std::vector<std::string> > out;
+  BOOST_FOREACH(const hardware_interface::ControllerInfo& ctrl, ctrls)
+  {
+    BOOST_FOREACH(const std::string& name, ctrl.resources)
+    {
+      out[name] = std::vector<std::string>(1, ctrl.hardware_interface);
+    }
+  }
+  return out;
+}
+
+typedef boost::shared_ptr<gazebo_ros_control::internal::ReadWriteResource> RwResPtr;
+std::list<RwResPtr>::iterator findResource(std::list<RwResPtr>& resource_list,
+                                           const std::string& resource_name,
+                                           const std::string& hardware_interface)
+{
+  for(std::list<RwResPtr>::iterator it = resource_list.begin(); it != resource_list.end(); ++it)
+  {
+    RwResPtr resource = *it;
+    const std::vector<std::string>& ifaces = resource->getHardwareInterfaceTypes();
+    if (resource->getName() == resource_name &&
+        std::find(ifaces.begin(), ifaces.end(), hardware_interface) != ifaces.end())
+    {
+      return it;
+    }
+  }
+  return resource_list.end();
+}
+
+template <class T>
+std::string listElements(const T& container)
+{
+  std::string out;
+  BOOST_FOREACH(typename T::const_reference val, container)
+  {
+    out += std::string(val) + ", ";
+  }
+  if (!container.empty())
+  {
+    out = out.substr(0, out.size() - 2);
+  }
+  return out;
+}
+
+} // namespace
+
+namespace gazebo_ros_control
+{
 
 bool DefaultRobotHWSim::initSim(
   const std::string& robot_namespace,
@@ -61,9 +119,12 @@ bool DefaultRobotHWSim::initSim(
   registerInterface(&pj_interface_);
   registerInterface(&vj_interface_);
 
+  // cache transmisions information
+  transmission_infos_ = transmissions;
+
   // populate hardware interfaces, bind them to raw Gazebo data
   namespace ti = transmission_interface;
-  BOOST_FOREACH(const ti::TransmissionInfo& tr_info, transmissions)
+  BOOST_FOREACH(const ti::TransmissionInfo& tr_info, transmission_infos_)
   {
     BOOST_FOREACH(const ti::JointInfo& joint_info, tr_info.joints_)
     {
@@ -71,7 +132,7 @@ bool DefaultRobotHWSim::initSim(
       {
         // TODO: Wrap in method for brevity?
         RwResPtr res;
-        // TODO: A plugin-based approach would do better than this if chain
+        // TODO: A plugin-based approach would do better than this 'if-elseif' chain
         // To do this, move contructor logic to init method, and unify signature
         if (iface_type == "hardware_interface/JointStateInterface")
         {
@@ -87,7 +148,6 @@ bool DefaultRobotHWSim::initSim(
         }
 
         // initialize and add to list of managed resources
-
         if (res)
         {
           try
@@ -111,7 +171,7 @@ bool DefaultRobotHWSim::initSim(
           catch(...)
           {
             ROS_ERROR_STREAM("Failed to initialize gazebo_ros_control plugin.\n" <<
-                             "Could not add joint '" << joint_info.name_ << "' to hardware interface '" <<
+                             "Could not add resource '" << joint_info.name_ << "' to hardware interface '" <<
                              iface_type << "'.");
             return false;
           }
@@ -121,14 +181,24 @@ bool DefaultRobotHWSim::initSim(
     }
   }
 
-  // Initialize the emergency stop code.
+  // initialize the emergency stop code
   e_stop_active_ = false;
+
+  // joint mode switching
+  mode_switch_enabled_ = true;
+  model_nh.getParam("gazebo_ros_control/enable_joint_mode_switching", mode_switch_enabled_); // TODO: Check namespace
+  const std::string enabled_str = mode_switch_enabled_ ? "enabled" : "disabled";
+  ROS_INFO_STREAM("Joint mode switching is " << enabled_str);
+
+  // initialize active writers
+  initActiveWriteResources();
 
   return true;
 }
 
 void DefaultRobotHWSim::readSim(ros::Time time, ros::Duration period)
 {
+  // read all resources
   BOOST_FOREACH(RwResPtr res, rw_resources_)
   {
     res->read(time, period, e_stop_active_);
@@ -137,9 +207,8 @@ void DefaultRobotHWSim::readSim(ros::Time time, ros::Duration period)
 
 void DefaultRobotHWSim::writeSim(ros::Time time, ros::Duration period)
 {
-  // TODO: Enforce joint limits
-
-  BOOST_FOREACH(RwResPtr res, rw_resources_)
+  boost::unique_lock<boost::mutex> lock(mutex_);
+  BOOST_FOREACH(RwResPtr res, active_w_resources_rt_)
   {
     res->write(time, period, e_stop_active_);
   }
@@ -148,6 +217,303 @@ void DefaultRobotHWSim::writeSim(ros::Time time, ros::Duration period)
 void DefaultRobotHWSim::eStopActive(const bool active)
 {
   e_stop_active_ = active;
+}
+
+bool DefaultRobotHWSim::canSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                                  const std::list<hardware_interface::ControllerInfo>& stop_list) const
+{
+  using std::list;
+  using std::map;
+  using std::string;
+  using std::vector;
+  using hardware_interface::ControllerInfo;
+  using transmission_interface::TransmissionInfo;
+  using transmission_interface::JointInfo;
+
+  // no-op if mode switching is disabled
+  if (!mode_switch_enabled_) {return true;}
+
+  typedef map<string, vector<string> > ResourceToInterfaces;
+  typedef ResourceToInterfaces::value_type ValueType;
+  const ResourceToInterfaces start_resource_to_ifaces = getResources(start_list);
+  const ResourceToInterfaces stop_resource_to_ifaces = getResources(stop_list);
+
+  // preconditions
+  BOOST_FOREACH(const ValueType& res_ifaces_, start_resource_to_ifaces)
+  {
+    const vector<string>& ifaces = res_ifaces_.second;
+    if (ifaces.size() > 1)
+    {
+      ROS_ERROR_STREAM("gazebo_ros_control plugin does not support resources " <<
+                       "that write to multiple hardware interfaces.");
+      return false;
+    }
+    assert(!ifaces.empty());
+  }
+
+  BOOST_FOREACH(const ValueType& res_ifaces_, stop_resource_to_ifaces)
+  {
+    const vector<string>& ifaces = res_ifaces_.second;
+    if (ifaces.size() > 1)
+    {
+      ROS_ERROR_STREAM("gazebo_ros_control plugin does not support resources " <<
+                       "that write to multiple hardware interfaces.");
+      return false;
+    }
+    assert(!ifaces.empty());
+  }
+
+  // seed active resources with what is currently being used in the control loop
+  {
+    boost::unique_lock<boost::mutex> lock(mutex_);
+    active_w_resources_nrt_ = active_w_resources_rt_;
+  }
+
+  // resource removal
+  BOOST_FOREACH(const ValueType& stop_res_ifaces, stop_resource_to_ifaces)
+  {
+    const string& stop_res_name = stop_res_ifaces.first;
+    const string& stop_res_iface = stop_res_ifaces.second.front(); // size == 1
+
+    // determine if resource to stop is also in the start list
+    bool name_in_start_list = false;
+    bool iface_in_start_list = false;
+    BOOST_FOREACH(const ValueType& start_res_ifaces_, start_resource_to_ifaces)
+    {
+      const string& start_res_name = start_res_ifaces_.first;
+      const string& start_res_iface = start_res_ifaces_.second.front(); // size == 1
+
+      if (stop_res_name == start_res_name)
+      {
+        name_in_start_list = true; // so far only name matches
+        if (stop_res_iface == start_res_iface)
+        {
+          iface_in_start_list = true; // both name and hardware interface match
+          break;
+        }
+      }
+    }
+
+    // same resource is being stopped, then started. No need to remove or add
+    if (name_in_start_list && iface_in_start_list) {continue;}
+
+    // actual resource removal
+    list<RwResPtr>::iterator rem_it = findResource(active_w_resources_nrt_,
+                                                   stop_res_name,
+                                                   stop_res_iface);
+    if (rem_it != active_w_resources_nrt_.end())
+    {
+      ROS_ERROR_STREAM("Removing resource '" << (*rem_it)->getName() << "' with hardware interfaces '" <<
+                       listElements((*rem_it)->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+      rem_it = active_w_resources_nrt_.erase(rem_it);
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Unexpected error. Could not find resource '" << stop_res_name <<
+                       "' with hardware interface '" <<
+                       stop_res_iface << "' in list of available resources");
+      return false;
+    }
+    // add a default resource (if any is registered for this resource name) if
+    // the removed resource is not claimed by the controllers to start. This prevents
+    // undesired things like the robot falling down due to absence of a control action.
+    if (!name_in_start_list)
+    {
+      map<string, RwResPtr>::const_iterator default_res_it = default_active_resources_.find(stop_res_name);
+      if (default_res_it != default_active_resources_.end())
+      {
+        RwResPtr default_res = default_res_it->second;
+        active_w_resources_nrt_.insert(rem_it, default_res); // in same place of removed resource
+        ROS_ERROR_STREAM("Adding default resource '" << default_res->getName() << "' with hardware interfaces '" <<
+                         listElements(default_res->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+      }
+    }
+  }
+
+  // resource addition
+  BOOST_FOREACH(const ValueType& start_res_ifaces_, start_resource_to_ifaces)
+  {
+    const string& start_res_name = start_res_ifaces_.first;
+    const string& start_res_iface = start_res_ifaces_.second.front(); // size == 1
+
+    // determine if resource to stop is in the list of active write resources
+    bool name_in_active_w = false;
+    bool iface_in_active_w = false;
+    BOOST_FOREACH(RwResPtr active_res, active_w_resources_nrt_)
+    {
+      string active_res_name = active_res->getName();
+      vector<string> active_res_ifaces = active_res->getHardwareInterfaceTypes();
+
+      if (start_res_name == active_res_name)
+      {
+        name_in_active_w = true;  // so far only name matches
+        if(std::find(active_res_ifaces.begin(),
+                     active_res_ifaces.end(),
+                     start_res_iface) != active_res_ifaces.end())
+        {
+          iface_in_active_w = true; // both name and hardware interface match
+          break;
+        }
+      }
+    }
+
+    // do nothing if resource (name and interface) is already active
+    if (name_in_active_w && iface_in_active_w) {continue;}
+
+    // there is a resource active using a different interface, remove it, as
+    // there can currently be only one. This might be due to, for instance, a
+    // default resource added to enforce a control action when no controllers
+    // are claiming it
+    if (name_in_active_w)
+    {
+      bool remove_ok = false;
+      for (list<RwResPtr>::iterator it = active_w_resources_nrt_.begin();
+           it != active_w_resources_nrt_.end();
+           ++it)
+      {
+        const string active_res_name = (*it)->getName();
+        if (active_res_name == start_res_name)
+        {
+          ROS_ERROR_STREAM("Removing (possibly default) resource '" << active_res_name << "' with hardware interfaces '" <<
+                           listElements((*it)->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+          active_w_resources_nrt_.erase(it);
+          remove_ok = true;
+          break;
+        }
+      }
+      if (!remove_ok)
+      {
+        ROS_ERROR_STREAM("Unexpected error. Could not find resource '" << start_res_name <<
+                         "' in list of active resources.");
+        return false;
+      }
+    }
+
+    // add resource
+    bool add_ok = false;
+    BOOST_FOREACH(RwResPtr res, rw_resources_)
+    {
+      // find resource in list of available resources
+      const vector<string> res_ifaces = res->getHardwareInterfaceTypes();
+      if (start_res_name == res->getName() &&
+          std::find(res_ifaces.begin(),
+                    res_ifaces.end(),
+                    start_res_iface) != res_ifaces.end())
+      {
+        ROS_ERROR_STREAM("Adding resource '" << res->getName() << "' with hardware interfaces '" <<
+                         listElements(res->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+        active_w_resources_nrt_.push_back(res);
+        add_ok = true;
+        break;
+      }
+    }
+    if (!add_ok)
+    {
+      ROS_ERROR_STREAM("Unexpected error. Could not find resource '" << start_res_name <<
+                       "' with hardware interface '" <<
+                       start_res_iface << "' in list of available resources");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void DefaultRobotHWSim::doSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                                 const std::list<hardware_interface::ControllerInfo>& stop_list)
+{
+  if (!mode_switch_enabled_) {return;}
+
+  boost::unique_lock<boost::mutex> lock(mutex_);
+  active_w_resources_rt_.swap(active_w_resources_nrt_);
+}
+
+void DefaultRobotHWSim::initActiveWriteResources()
+{
+  // TODO: Make plugin-based?
+  using std::find;
+  using std::map;
+  using std::string;
+  using std::vector;
+  namespace hi  = hardware_interface;
+  namespace hii = hi::internal;
+
+  // if mode switching is disabled, all available resources are considered active
+  // this list is static and will not change over time
+  if (!mode_switch_enabled_)
+  {
+    active_w_resources_rt_ = rw_resources_;
+    return;
+  }
+
+  // list all resource data associated to each unique resource name
+  typedef map<string, vector<RwResPtr> > IfaceToResources; // hardware interface -> list of resources exposing it
+
+  map <string, IfaceToResources> res_map; // resource name -> IfaceToResources
+  BOOST_FOREACH(RwResPtr res, rw_resources_)
+  {
+    const string name = res->getName();
+    vector<string> ifaces = res->getHardwareInterfaceTypes();
+
+    IfaceToResources& iface_to_res_map = res_map[name];
+    BOOST_FOREACH(const string& iface, ifaces)
+    {
+      vector<RwResPtr>& resources = iface_to_res_map[iface];
+      resources.push_back(res);
+    }
+  }
+
+  // select which resources to activate by default
+  {
+    typedef map<string, IfaceToResources>::value_type ValueType;
+    BOOST_FOREACH(const ValueType& iface_to_res_map, res_map)
+    {
+      IfaceToResources::const_iterator it;
+      const IfaceToResources& iface_to_res = iface_to_res_map.second;
+
+      // try to find a position control interface
+      // TODO: Move to function, duplicated below
+      it = iface_to_res.find(hii::demangledTypeName<hi::PositionJointInterface>());
+      if (it != iface_to_res.end())
+      {
+        const vector<RwResPtr>& resources = it->second;
+        if (!resources.empty())
+        {
+          RwResPtr resource = resources.front();
+          default_active_resources_[resource->getName()] = resource;
+          ROS_ERROR_STREAM("Adding '" << resource->getName() << "' using the '" <<
+                           hii::demangledTypeName<hi::PositionJointInterface>() <<
+                           "' hardware interface to the set of resources active by default."); // TODO: Lower severity to debug
+          continue;
+        }
+      }
+
+      // try to find a velocity control interface
+      it = iface_to_res.find(hii::demangledTypeName<hi::VelocityJointInterface>());
+      if (it != iface_to_res.end())
+      {
+        const vector<RwResPtr>& resources = it->second;
+        if (!resources.empty())
+        {
+          RwResPtr resource = resources.front();
+          default_active_resources_[resource->getName()] = resource;
+          ROS_ERROR_STREAM("Adding '" << resource->getName() << "' using the '" <<
+                           hii::demangledTypeName<hi::VelocityJointInterface>() <<
+                           "' hardware interface to the set of resources active by default."); // TODO: Lower severity to debug
+          continue;
+        }
+      }
+    }
+  }
+
+  // initialize list of active resources
+  {
+    typedef map<string, RwResPtr>::value_type ValueType;
+    BOOST_FOREACH(ValueType val, default_active_resources_)
+    {
+      active_w_resources_rt_.push_back(val.second);
+    }
+  }
 }
 
 } // namespace
