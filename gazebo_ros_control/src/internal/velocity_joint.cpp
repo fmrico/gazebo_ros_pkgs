@@ -30,7 +30,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include <angles/angles.h>
 #include <control_toolbox/pid.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_state_interface.h>
