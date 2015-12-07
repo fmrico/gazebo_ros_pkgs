@@ -126,27 +126,27 @@ void VelocityJoint::init(const std::string&           resource_name,
   // TODO: Move to method?
   // joint limit enforcing
   // limits enforcement can be ignored for this joint by setting a ROS parameter
-  bool ignore_limits = false;
+  bool ignore_limits = true;
   nh.getParam("joint_limits/ignore_joints/" + resource_name, ignore_limits);
   if (!ignore_limits && has_joint_limits)
   {
     if (has_soft_joint_limits)
     {
       soft_limits_handle_.reset(new SoftLimitsHandle(vel_handle, limits, soft_limits));
-      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+      ROS_DEBUG_STREAM("Soft joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");
     }
     else
     {
       sat_limits_handle_.reset(new SatLimitsHandle(vel_handle, limits));
-      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+      ROS_DEBUG_STREAM("Joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");
     }
   }
   else
   {
-    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                     hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    ROS_DEBUG_STREAM("No joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                     hii::demangledTypeName<hi::VelocityJointInterface>() << "'hardware interface.");
   }
 
   // PID spec (optional)
@@ -155,15 +155,15 @@ void VelocityJoint::init(const std::string&           resource_name,
   const bool has_pid = pid_->init(pid_nh, true); // true == quiet
   if (has_pid)
   {
-    ROS_ERROR_STREAM("Found PID configuration for joint '" << resource_name << "'.\n" <<
+    ROS_DEBUG_STREAM("Found PID configuration for joint '" << resource_name << "'.\n" <<
                      "It will be used for converting '" <<
-                     hii::demangledTypeName<hi::VelocityJointInterface>() << "' commands to effort."); // TODO: Lower severity to debug
+                     hii::demangledTypeName<hi::VelocityJointInterface>() << "' commands to effort.");
   }
   else
   {
-    ROS_ERROR_STREAM("Did not find PID configuration for joint '" << resource_name << "'.\n" <<
+    ROS_DEBUG_STREAM("Did not find PID configuration for joint '" << resource_name << "'.\n" <<
                      "Commands from '" <<
-                     hii::demangledTypeName<hi::VelocityJointInterface>() << "' will bypass dynamics."); // TODO: Lower severity to debug
+                     hii::demangledTypeName<hi::VelocityJointInterface>() << "' will bypass dynamics.");
     pid_.reset();
 
     // needed when using joint->setPosition() or joint->setVelocity(), not when using joint->SetForce()

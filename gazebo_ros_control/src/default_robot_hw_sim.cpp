@@ -162,8 +162,8 @@ bool DefaultRobotHWSim::initSim(
                       urdf_model,
                       this);
             rw_resources_.push_back(res);
-            ROS_ERROR_STREAM("Registered joint '" << joint_info.name_ << "' in hardware interface '" <<
-                             iface_type << "'."); // TODO: Lower severity to debug!
+            ROS_DEBUG_STREAM("Registered joint '" << joint_info.name_ << "' in hardware interface '" <<
+                             iface_type << "'.");
           }
           catch (const internal::ExistingResourceException&) {} // resource already added, no problem
           catch (const std::runtime_error& ex)
@@ -307,8 +307,8 @@ bool DefaultRobotHWSim::canSwitch(const std::list<hardware_interface::Controller
                                                    stop_res_iface);
     if (rem_it != active_w_resources_nrt_.end())
     {
-      ROS_ERROR_STREAM("Removing resource '" << (*rem_it)->getName() << "' with hardware interfaces '" <<
-                       listElements((*rem_it)->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+      ROS_DEBUG_STREAM("Removing resource '" << (*rem_it)->getName() << "' with hardware interfaces '" <<
+                       listElements((*rem_it)->getHardwareInterfaceTypes()) << "'.");
       rem_it = active_w_resources_nrt_.erase(rem_it);
     }
     else
@@ -328,8 +328,8 @@ bool DefaultRobotHWSim::canSwitch(const std::list<hardware_interface::Controller
       {
         RwResPtr default_res = default_res_it->second;
         active_w_resources_nrt_.insert(rem_it, default_res); // in same place of removed resource
-        ROS_ERROR_STREAM("Adding default resource '" << default_res->getName() << "' with hardware interfaces '" <<
-                         listElements(default_res->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+        ROS_DEBUG_STREAM("Adding default resource '" << default_res->getName() << "' with hardware interfaces '" <<
+                         listElements(default_res->getHardwareInterfaceTypes()) << "'.");
       }
     }
   }
@@ -378,8 +378,8 @@ bool DefaultRobotHWSim::canSwitch(const std::list<hardware_interface::Controller
         const string active_res_name = (*it)->getName();
         if (active_res_name == start_res_name)
         {
-          ROS_ERROR_STREAM("Removing (possibly default) resource '" << active_res_name << "' with hardware interfaces '" <<
-                           listElements((*it)->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+          ROS_DEBUG_STREAM("Removing (possibly default) resource '" << active_res_name << "' with hardware interfaces '" <<
+                           listElements((*it)->getHardwareInterfaceTypes()) << "'.");
           active_w_resources_nrt_.erase(it);
           remove_ok = true;
           break;
@@ -404,8 +404,8 @@ bool DefaultRobotHWSim::canSwitch(const std::list<hardware_interface::Controller
                     res_ifaces.end(),
                     start_res_iface) != res_ifaces.end())
       {
-        ROS_ERROR_STREAM("Adding resource '" << res->getName() << "' with hardware interfaces '" <<
-                         listElements(res->getHardwareInterfaceTypes()) << "'."); // TODO: Lower severity to debug
+        ROS_DEBUG_STREAM("Adding resource '" << res->getName() << "' with hardware interfaces '" <<
+                         listElements(res->getHardwareInterfaceTypes()) << "'.");
         active_w_resources_nrt_.push_back(res);
         add_ok = true;
         break;
@@ -485,9 +485,9 @@ void DefaultRobotHWSim::initActiveWriteResources()
         {
           RwResPtr resource = resources.front();
           default_active_resources_[resource->getName()] = resource;
-          ROS_ERROR_STREAM("Adding '" << resource->getName() << "' using the '" <<
+          ROS_DEBUG_STREAM("Adding '" << resource->getName() << "' using the '" <<
                            hii::demangledTypeName<hi::PositionJointInterface>() <<
-                           "' hardware interface to the set of resources active by default."); // TODO: Lower severity to debug
+                           "' hardware interface to the set of resources active by default.");
           continue;
         }
       }
@@ -501,9 +501,9 @@ void DefaultRobotHWSim::initActiveWriteResources()
         {
           RwResPtr resource = resources.front();
           default_active_resources_[resource->getName()] = resource;
-          ROS_ERROR_STREAM("Adding '" << resource->getName() << "' using the '" <<
+          ROS_DEBUG_STREAM("Adding '" << resource->getName() << "' using the '" <<
                            hii::demangledTypeName<hi::VelocityJointInterface>() <<
-                           "' hardware interface to the set of resources active by default."); // TODO: Lower severity to debug
+                           "' hardware interface to the set of resources active by default.");
           continue;
         }
       }

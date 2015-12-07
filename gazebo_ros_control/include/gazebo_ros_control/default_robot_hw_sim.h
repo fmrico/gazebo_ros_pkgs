@@ -100,6 +100,7 @@ public:
                         const std::list<hardware_interface::ControllerInfo>& stop_list);
 
 protected:
+
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;

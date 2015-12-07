@@ -108,27 +108,27 @@ void EffortJoint::init(const std::string&           resource_name,
   // TODO: Move to method?
   // joint limit enforcing
   // limits enforcement can be ignored for this joint by setting a ROS parameter
-  bool ignore_limits = false;
+  bool ignore_limits = true;
   nh.getParam("joint_limits/ignore_joints/" + resource_name, ignore_limits);
   if (!ignore_limits && has_joint_limits)
   {
     if (has_soft_joint_limits)
     {
       soft_limits_handle_.reset(new SoftLimitsHandle(eff_handle, limits, soft_limits));
-      ROS_ERROR_STREAM("Soft joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                       hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+      ROS_DEBUG_STREAM("Soft joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");
     }
     else
     {
       sat_limits_handle_.reset(new SatLimitsHandle(eff_handle, limits));
-      ROS_ERROR_STREAM("Joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                       hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+      ROS_DEBUG_STREAM("Joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                       hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");
     }
   }
   else
   {
-    ROS_ERROR_STREAM("No joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
-                     hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");  // TODO: Lower severity to debug
+    ROS_DEBUG_STREAM("No joint limits will be enforced for joint '" << resource_name << "' when using the '" <<
+                     hii::demangledTypeName<hi::EffortJointInterface>() << "'hardware interface.");
   }
 }
 
