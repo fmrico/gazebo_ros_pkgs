@@ -593,7 +593,7 @@ bool GazeboRosApiPlugin::spawnGazeboModel(gazebo_msgs::SpawnModel::Request &req,
                                           gazebo_msgs::SpawnModel::Response &res)
 {
   ROS_WARN_STREAM_NAMED("api_plugin","/gazebo/spawn_gazebo_model is deprecated, use /gazebo/spawn_sdf_model instead");
-  spawnSDFModel(req, res);
+  return spawnSDFModel(req, res);
 }
 
 bool GazeboRosApiPlugin::spawnSDFModel(gazebo_msgs::SpawnModel::Request &req,
