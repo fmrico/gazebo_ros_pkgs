@@ -164,13 +164,13 @@ void PositionJoint::init(const std::string&           resource_name,
   }
   else
   {
-    ROS_DEBUG_STREAM("Did not find PID configuration for joint '" << resource_name << "'.\n" <<
+    ROS_ERROR_STREAM("Did not find PID configuration for joint '" << resource_name << "'.\n" <<
                      "Commands from '" <<
                      hii::demangledTypeName<hi::PositionJointInterface>() << "' will bypass dynamics.");
-    pid_.reset();
+    //pid_.reset();
 
     // needed when using joint->setPosition() or joint->setVelocity(), not when using joint->SetForce()
-    sim_joint_->SetMaxForce(0, eff_max_);
+    //sim_joint_->SetMaxForce(0, eff_max_);
   }
 }
 
@@ -252,12 +252,12 @@ void PositionJoint::write(const ros::Time&     /*time*/,
   }
   else
   {
-    #if GAZEBO_MAJOR_VERSION >= 4
-      sim_joint_->SetPosition(0, pos_cmd);
-    #else
-//    ROS_ERROR_STREAM("pos_cmd " << name_ << " " << pos_cmd << ". pos_cmd_ " << pos_cmd_);
-      sim_joint_->SetAngle(0, pos_cmd);
-    #endif
+//    #if GAZEBO_MAJOR_VERSION >= 4
+//      sim_joint_->SetPosition(0, pos_cmd);
+//    #else
+////    ROS_ERROR_STREAM("pos_cmd " << name_ << " " << pos_cmd << ". pos_cmd_ " << pos_cmd_);
+//      sim_joint_->SetAngle(0, pos_cmd);
+//    #endif
   }
 }
 
