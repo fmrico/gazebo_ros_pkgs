@@ -2,6 +2,11 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* disable -Werror=maybe-uninitialized
+* Contributors: Jeremie Deray
+
 2.6.0 (2016-03-09)
 ------------------
 * rm deps gazebo5
