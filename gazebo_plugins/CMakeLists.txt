@@ -47,6 +47,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 # /opt/ros/indigo/include/tf/LinearMath/Matrix3x3.h:152:61
 string(REPLACE "-Werror=maybe-uninitialized" "" NEW_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 set(CMAKE_CXX_FLAGS "${NEW_CXX_FLAGS}")
+string(REPLACE "-Werror=uninitialized" "" NEW_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS "${NEW_CXX_FLAGS}")
 
 execute_process(COMMAND
   pkg-config --variable=plugindir OGRE
