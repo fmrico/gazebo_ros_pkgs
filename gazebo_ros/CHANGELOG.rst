@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2016-03-09)
+------------------
 * rm deps gazebo5
 * Add missing return value
 * Contributors: Jeremie Deray, Sam Pfeiffer

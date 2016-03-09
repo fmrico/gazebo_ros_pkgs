@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.0 (2016-03-09)
+------------------
 * rm deps gazebo5
 * More strict requierements for pids
 * Change log messagges from error to debug, disabled by default limits
