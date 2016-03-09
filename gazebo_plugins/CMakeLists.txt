@@ -43,6 +43,11 @@ find_package(gazebo REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 
+# Tf pops this warning from
+# /opt/ros/indigo/include/tf/LinearMath/Matrix3x3.h:152:61
+string(REPLACE "-Werror=maybe-uninitialized" "" NEW_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS "${NEW_CXX_FLAGS}")
+
 execute_process(COMMAND
   pkg-config --variable=plugindir OGRE
   OUTPUT_VARIABLE OGRE_PLUGIN_PATH
