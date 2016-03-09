@@ -2,6 +2,27 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rm deps gazebo5
+* More strict requierements for pids
+* Change log messagges from error to debug, disabled by default limits
+* Implement effort joint (builds, but untested)
+* Remove unused header
+* Initial support for joint control mode switching
+* Add joint limits enforcing
+  - Simple saturation and soft policies are available.
+  - It's possible to disable joint limits enforcing for individial joints via
+  ROS parameters.
+* Dead code cleanup
+* First stab at gazebo_ros_control refactor
+  - Only position and velocity joints are supported
+  - No joint limits yet
+  - e-stop not validated
+  - No mode switching yet
+  - No plugin interface for interfaces
+* Contributors: Adolfo Rodriguez Tsouroukdissian, Hilario Tome, Jeremie Deray
+
 2.5.1 (2015-08-16)
 ------------------
 * Fix DefaultRobotHWSim puts robotNamespace twice

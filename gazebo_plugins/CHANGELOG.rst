@@ -2,6 +2,11 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rm deps gazebo5
+* Contributors: Jeremie Deray
+
 2.5.1 (2015-08-16)
 ------------------
 * Port of Pal Robotics range sensor plugin to Jade

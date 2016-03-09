@@ -2,6 +2,12 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rm deps gazebo5
+* Add missing return value
+* Contributors: Jeremie Deray, Sam Pfeiffer
+
 2.5.1 (2015-08-16)
 ------------------
 * Port of Pal Robotics range sensor plugin to Jade
