@@ -76,6 +76,7 @@ void PositionJoint::init(const std::string&           resource_name,
   }
   catch (const internal::ExistingResourceException&) {} // resource already added, no problem
 
+  ROS_ERROR_STREAM("Position joint in gazebo_ros_control: " << resource_name);
   // ros_control hardware interface
   namespace hi  = hardware_interface;
   namespace hii = hi::internal;
@@ -233,11 +234,16 @@ void PositionJoint::write(const ros::Time&     /*time*/,
     {
     case urdf::Joint::REVOLUTE:
       using namespace angles;
-      shortest_angular_distance_with_limits(pos_,
-                                            pos_cmd,
-                                            pos_min_,
-                                            pos_max_,
-                                            error);
+//      Not using this method as if the actuator has joint limits
+//          that have a range bigger than 360deg it clamps the commands.
+//      This was found with the Hey5 hand with limits like -150deg to +360deg
+//          for the thumb.
+//      shortest_angular_distance_with_limits(pos_,
+//                                            pos_cmd,
+//                                            pos_min_,
+//                                            pos_max_,
+//                                            error);
+      error = pos_cmd - pos_;
       break;
     case urdf::Joint::CONTINUOUS:
       error = shortest_angular_distance(pos_, pos_cmd);
