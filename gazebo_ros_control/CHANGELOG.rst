@@ -2,6 +2,12 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix the command of fingers of hey5 hand
+  They had ranges bigger than 360 degrees and a safety check clamped the commands in a wrong way.
+* Contributors: Sam Pfeiffer
+
 2.6.2 (2016-03-09)
 ------------------
 
