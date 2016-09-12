@@ -76,7 +76,7 @@ void PositionJoint::init(const std::string&           resource_name,
   }
   catch (const internal::ExistingResourceException&) {} // resource already added, no problem
 
-  ROS_ERROR_STREAM("Position joint in gazebo_ros_control: " << resource_name);
+  ROS_DEBUG_STREAM("Position joint in gazebo_ros_control: " << resource_name);
   // ros_control hardware interface
   namespace hi  = hardware_interface;
   namespace hii = hi::internal;
