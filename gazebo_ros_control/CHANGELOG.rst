@@ -2,6 +2,11 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* remove unnecessary error message
+* Contributors: Jordi Pages
+
 2.6.3 (2016-04-18)
 ------------------
 * Fix the command of fingers of hey5 hand
