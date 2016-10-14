@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.4 (2016-10-14)
+------------------
 * remove unnecessary error message
 * Contributors: Jordi Pages
 
