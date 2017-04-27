@@ -51,6 +51,8 @@
 #include <sdf/Param.hh>
 
 #include <tf/tf.h>
+#include <tf/transform_listener.h>
+
 
 namespace gazebo
 {
@@ -191,10 +193,16 @@ void GazeboRosRange::LoadThread()
 {
   this->rosnode_ = new ros::NodeHandle(this->robot_namespace_);
 
+  std::string tf_prefix = tf::getPrefixParam(*this->rosnode_);
+  if(tf_prefix.empty()) {
+      tf_prefix = this->robot_namespace_;
+      boost::trim_right_if(tf_prefix,boost::is_any_of("/"));
+  }
+  ROS_INFO("Laser Plugin (ns = %s)  <tf_prefix_>, set to \"%s\"",
+             this->robot_namespace_.c_str(), tf_prefix.c_str());
+
   // resolve tf prefix
-  std::string prefix;
-  this->rosnode_->getParam(std::string("tf_prefix"), prefix);
-  this->frame_name_ = tf::resolve(prefix, this->frame_name_);
+  this->frame_name_ = tf::resolve(tf_prefix, this->frame_name_);
 
   if (this->topic_name_ != "")
   {
