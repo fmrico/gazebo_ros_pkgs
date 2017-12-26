@@ -78,52 +78,53 @@
 
 namespace gazebo_ros_control
 {
-
-// TODO: Doc that we currently don't support writing to multiple interfaces at the same time
+// TODO: Doc that we currently don't support writing to multiple interfaces at the same
+// time
 class DefaultRobotHWSim : public gazebo_ros_control::RobotHWSim
 {
 public:
-
-  virtual bool initSim(
-    const std::string& robot_namespace,
-    ros::NodeHandle model_nh,
-    gazebo::physics::ModelPtr parent_model,
-    const urdf::Model *const urdf_model,
-    std::vector<transmission_interface::TransmissionInfo> transmissions);
+  virtual bool initSim(const std::string& robot_namespace, ros::NodeHandle model_nh,
+                       gazebo::physics::ModelPtr parent_model, const urdf::Model* const urdf_model,
+                       std::vector<transmission_interface::TransmissionInfo> transmissions);
 
   virtual void readSim(ros::Time time, ros::Duration period);
   virtual void writeSim(ros::Time time, ros::Duration period);
 
   virtual void eStopActive(const bool active);
 
-  virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo>&start_list,
-                         const std::list<hardware_interface::ControllerInfo>& stop_list) override;
+  virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
+                             const std::list<hardware_interface::ControllerInfo>& stop_list) override;
   virtual void doSwitch(const std::list<hardware_interface::ControllerInfo>& start_list,
                         const std::list<hardware_interface::ControllerInfo>& stop_list) override;
 
 protected:
-
-  hardware_interface::JointStateInterface    js_interface_;
-  hardware_interface::EffortJointInterface   ej_interface_;
+  hardware_interface::JointStateInterface js_interface_;
+  hardware_interface::EffortJointInterface ej_interface_;
   hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::VelocityJointInterface vj_interface_;
   hardware_interface::JointModeInterface jm_interface_;
 
-  typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
-  std::list<RwResPtr> rw_resources_; ///< available read and/or write resources resources
-  std::list<RwResPtr> active_w_resources_rt_; ///< subset of available resources currently writing control commands
-  mutable std::list<RwResPtr> active_w_resources_nrt_; // TODO: Remove mutable in jade
+  std::vector<int> joint_mode_state_;
 
-  std::map<std::string, RwResPtr> default_active_resources_; ///< Resources to activate when no controllers are running (if any)
+  typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
+  std::list<RwResPtr> rw_resources_;  ///< available read and/or write resources resources
+  std::list<RwResPtr> active_w_resources_rt_;  ///< subset of available resources
+                                               /// currently writing control commands
+  mutable std::list<RwResPtr> active_w_resources_nrt_;  // TODO: Remove mutable in jade
+
+  std::map<std::string, RwResPtr> default_active_resources_;  ///< Resources to activate
+                                                              /// when no controllers are
+  /// running (if any)
   // TODO: Add parameter to disable default active resources
 
-  bool e_stop_active_; ///< Evaluates to true when in e-stop
-  bool mode_switch_enabled_; ///< Evaluates to true when joint mode switching is enabled // TODO: Remove!
+  bool e_stop_active_;        ///< Evaluates to true when in e-stop
+  bool mode_switch_enabled_;  ///< Evaluates to true when joint mode switching is enabled
+                              ///// TODO: Remove!
 
   typedef std::vector<transmission_interface::TransmissionInfo> TransmissionInfoList;
-  TransmissionInfoList transmission_infos_; ///< Used to reason about mode switching
+  TransmissionInfoList transmission_infos_;  ///< Used to reason about mode switching
 
-  mutable boost::mutex mutex_; // TODO: Remove mutable in jade
+  mutable boost::mutex mutex_;  // TODO: Remove mutable in jade
 
   /**
    * \brief initialize the list of resources writing control commands.
@@ -145,7 +146,6 @@ protected:
    */
   virtual void initActiveWriteResources();
 };
-
 }
 
-#endif // #ifndef __GAZEBO_ROS_CONTROL_PLUGIN_DEFAULT_ROBOT_HW_SIM_H_
+#endif  // #ifndef __GAZEBO_ROS_CONTROL_PLUGIN_DEFAULT_ROBOT_HW_SIM_H_
