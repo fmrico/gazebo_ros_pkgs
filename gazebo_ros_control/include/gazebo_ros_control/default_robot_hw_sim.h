@@ -105,6 +105,7 @@ protected:
   hardware_interface::JointModeInterface jm_interface_;
 
   std::vector<int> joint_mode_state_;
+  std::map<std::string, int> joint_mode_map_;
 
   typedef boost::shared_ptr<internal::ReadWriteResource> RwResPtr;
   std::list<RwResPtr> rw_resources_;  ///< available read and/or write resources resources

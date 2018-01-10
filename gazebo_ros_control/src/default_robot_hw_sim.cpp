@@ -109,6 +109,30 @@ std::string listElements(const T& container)
 
 namespace gazebo_ros_control
 {
+hardware_interface::JointCommandModes convert(const std::string& type)
+{
+  hardware_interface::JointCommandModes res;
+  // RwResPtr& resource = it;
+  if (type == "hardware_interface/PositionJointInterface")
+  {
+    res = hardware_interface::JointCommandModes::MODE_POSITION;
+  }
+  else if (type == "hardware_interface/VelocityJointInterface")
+  {
+    res = hardware_interface::JointCommandModes::MODE_VELOCITY;
+  }
+  else if (type == "hardware_interface/EffortJointInterface")
+  {
+    res = hardware_interface::JointCommandModes::MODE_EFFORT;
+  }
+  else if (type == "hardware_interface/JointStateInterface")
+  {
+    res = hardware_interface::JointCommandModes::NOMODE;
+  }
+
+  return res;
+}
+
 bool DefaultRobotHWSim::initSim(const std::string& robot_namespace, ros::NodeHandle model_nh,
                                 gazebo::physics::ModelPtr parent_model,
                                 const urdf::Model* const urdf_model,
@@ -200,35 +224,19 @@ bool DefaultRobotHWSim::initSim(const std::string& robot_namespace, ros::NodeHan
   initActiveWriteResources();
 
   // Register mode state interface
+
+  hardware_interface::JointModeInterface* mode_iface =
+      this->get<hardware_interface::JointModeInterface>();
+
   joint_mode_state_.resize(active_w_resources_rt_.size());
   unsigned int joint_mode_index = 0;
   for (auto it = active_w_resources_rt_.begin(); it != active_w_resources_rt_.end(); ++it)
   {
-    // RwResPtr& resource = it;
-    if ((*it)->getHardwareInterfaceTypes()[0] == "hardware_interface/"
-                                                 "PositionJointInterface")
-    {
-      joint_mode_state_[joint_mode_index] = hardware_interface::JointCommandModes::MODE_POSITION;
-    }
-    else if ((*it)->getHardwareInterfaceTypes()[0] == "hardware_interface/"
-                                                      "VelocityJointInterface")
-    {
-      joint_mode_state_[joint_mode_index] = hardware_interface::JointCommandModes::MODE_VELOCITY;
-    }
-    else if ((*it)->getHardwareInterfaceTypes()[0] == "hardware_interface/"
-                                                      "EffortJointInterface")
-    {
-      joint_mode_state_[joint_mode_index] = hardware_interface::JointCommandModes::MODE_EFFORT;
-    }
-    else if ((*it)->getHardwareInterfaceTypes()[0] == "hardware_interface/"
-                                                      "JointStateInterface")
-    {
-      joint_mode_state_[joint_mode_index] = hardware_interface::JointCommandModes::NOMODE;
-    }
-
-    jm_interface_.registerHandle(hardware_interface::JointModeHandle(
+    joint_mode_state_[joint_mode_index] = convert((*it)->getHardwareInterfaceTypes()[0]);
+    mode_iface->registerHandle(hardware_interface::JointModeHandle(
         (*it)->getName(), &joint_mode_state_[joint_mode_index]));
 
+    joint_mode_map_[(*it)->getName()] = joint_mode_index;
     ++joint_mode_index;
   }
 
@@ -241,6 +249,12 @@ void DefaultRobotHWSim::readSim(ros::Time time, ros::Duration period)
   BOOST_FOREACH (RwResPtr res, rw_resources_)
   {
     res->read(time, period, e_stop_active_);
+  }
+
+  // Updata joint mode state
+  BOOST_FOREACH (RwResPtr res, active_w_resources_rt_)
+  {
+    joint_mode_state_[joint_mode_map_[res->getName()]] = convert(res->getHardwareInterfaceTypes()[0]);
   }
 }
 
