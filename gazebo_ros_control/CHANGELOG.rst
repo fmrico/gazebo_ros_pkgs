@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.5 (2018-01-11)
+------------------
 * removed changelogs and unified package versions
 * added updating of joint mode
 * added joint mode

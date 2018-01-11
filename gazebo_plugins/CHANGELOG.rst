@@ -2,8 +2,8 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.5 (2018-01-11)
+------------------
 * removed changelogs and unified package versions
 * Fix gazebo8 warnings part 8: ifdef's for GetWorldPose (#650)
   * gazebo_ros_vacuum_gripper: ifdef one GetWorldPose
