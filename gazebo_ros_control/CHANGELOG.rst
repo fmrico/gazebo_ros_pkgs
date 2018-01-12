@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.7 (2018-01-12)
+------------------
 * fixed unitialized value
 * Contributors: Hilario Tome
 
