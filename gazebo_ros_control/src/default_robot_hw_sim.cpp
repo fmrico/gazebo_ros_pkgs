@@ -111,7 +111,7 @@ namespace gazebo_ros_control
 {
 hardware_interface::JointCommandModes convert(const std::string& type)
 {
-  hardware_interface::JointCommandModes res;
+  hardware_interface::JointCommandModes res = hardware_interface::JointCommandModes::NOMODE;
   // RwResPtr& resource = it;
   if (type == "hardware_interface/PositionJointInterface")
   {
