@@ -2,6 +2,11 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixed unitialized values
+* Contributors: Hilario Tome
+
 2.6.5 (2018-01-11)
 ------------------
 * removed changelogs and unified package versions
