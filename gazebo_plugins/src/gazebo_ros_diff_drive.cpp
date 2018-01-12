@@ -406,7 +406,7 @@ void GazeboRosDiffDrive::publishOdometry ( double step_time )
     std::string odom_frame = gazebo_ros_->resolveTF ( odometry_frame_ );
     std::string base_footprint_frame = gazebo_ros_->resolveTF ( robot_base_frame_ );
 
-    tf::Quaternion qt;
+    tf::Quaternion qt(0., 0., 0., 1.);
     tf::Vector3 vt;
 
     if ( odom_source_ == ENCODER ) {
