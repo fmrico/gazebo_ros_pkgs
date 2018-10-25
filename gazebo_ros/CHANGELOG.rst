@@ -2,8 +2,8 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.6.8 (2018-10-25)
+------------------
 * Merge branch 'add-required' into 'erbium-devel'
   Add required option
   See merge request common/gazebo_ros_pkgs!3
