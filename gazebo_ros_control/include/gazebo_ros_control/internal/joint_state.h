@@ -76,7 +76,7 @@ protected:
   double vel_;
   double eff_;
 
-  boost::shared_ptr<const urdf::Joint> urdf_joint_;
+  std::shared_ptr<const urdf::Joint> urdf_joint_;
 
   gazebo::physics::JointPtr sim_joint_;
 };

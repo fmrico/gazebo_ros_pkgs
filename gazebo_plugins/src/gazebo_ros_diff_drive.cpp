@@ -131,7 +131,7 @@ void GazeboRosDiffDrive::Load ( physics::ModelPtr _parent, sdf::ElementPtr _sdf 
     // Initialize update rate stuff
     if ( this->update_rate_ > 0.0 ) this->update_period_ = 1.0 / this->update_rate_;
     else this->update_period_ = 0.0;
-    last_update_time_ = parent->GetWorld()->GetSimTime();
+    last_update_time_ = parent->GetWorld()->SimTime();
 
     // Initialize velocity stuff
     wheel_speed_[RIGHT] = 0;
@@ -183,7 +183,7 @@ void GazeboRosDiffDrive::Load ( physics::ModelPtr _parent, sdf::ElementPtr _sdf 
 
 void GazeboRosDiffDrive::Reset()
 {
-  last_update_time_ = parent->GetWorld()->GetSimTime();
+  last_update_time_ = parent->GetWorld()->SimTime();
   pose_encoder_.x = 0;
   pose_encoder_.y = 0;
   pose_encoder_.theta = 0;
@@ -255,7 +255,7 @@ void GazeboRosDiffDrive::UpdateChild()
 
 
     if ( odom_source_ == ENCODER ) UpdateOdometryEncoder();
-    common::Time current_time = parent->GetWorld()->GetSimTime();
+    common::Time current_time = parent->GetWorld()->SimTime();
     double seconds_since_last_update = ( current_time - last_update_time_ ).Double();
 
     if ( seconds_since_last_update > update_period_ ) {
@@ -347,7 +347,7 @@ void GazeboRosDiffDrive::UpdateOdometryEncoder()
 {
     double vl = joints_[LEFT]->GetVelocity ( 0 );
     double vr = joints_[RIGHT]->GetVelocity ( 0 );
-    common::Time current_time = parent->GetWorld()->GetSimTime();
+    common::Time current_time = parent->GetWorld()->SimTime();
     double seconds_since_last_update = ( current_time - last_odom_update_ ).Double();
     last_odom_update_ = current_time;
 
@@ -436,8 +436,8 @@ void GazeboRosDiffDrive::publishOdometry ( double step_time )
 
         // get velocity in /odom frame
         ignition::math::Vector3d linear;
-        linear = parent->GetWorldLinearVel().Ign();
-        odom_.twist.twist.angular.z = parent->GetWorldAngularVel().Ign().Z();
+        linear = parent->WorldLinearVel();
+        odom_.twist.twist.angular.z = parent->WorldAngularVel().Z();
 
         // convert velocity to child_frame_id (aka base_footprint)
         float yaw = pose.Rot().Yaw();

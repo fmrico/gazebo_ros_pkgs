@@ -112,11 +112,19 @@ void JointState::read(const ros::Time&     /*time*/,
   // Gazebo has an interesting API...
   if (urdf_joint_->type == urdf::Joint::PRISMATIC)
   {
-    pos_ = sim_joint_->GetAngle(0).Radian();
+    #if GAZEBO_MAJOR_VERSION >= 8
+      pos_ = sim_joint_->Position(0);
+    #else
+      pos_ = sim_joint_->GetAngle(0).Radian();
+    #endif
   }
   else
   {
-    pos_ += shortest_angular_distance(pos_, sim_joint_->GetAngle(0).Radian());
+    #if GAZEBO_MAJOR_VERSION >= 8
+      pos_ += shortest_angular_distance(pos_, sim_joint_->Position(0));
+    #else
+      pos_ += shortest_angular_distance(pos_, sim_joint_->GetAngle(0).Radian());
+    #endif
   }
   vel_ = sim_joint_->GetVelocity(0);
   eff_ = sim_joint_->GetForce(static_cast<unsigned int>(0));

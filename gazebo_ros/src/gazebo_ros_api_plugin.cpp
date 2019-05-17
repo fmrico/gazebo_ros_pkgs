@@ -505,7 +505,7 @@ void GazeboRosApiPlugin::advertiseServices()
 
   // todo: contemplate setting environment variable ROBOT=sim here???
   nh_->getParam("pub_clock_frequency", pub_clock_frequency_);
-  last_pub_clock_time_ = world_->GetSimTime();
+  last_pub_clock_time_ = world_->SimTime();
 }
 
 void GazeboRosApiPlugin::onLinkStatesConnect()
@@ -626,7 +626,7 @@ bool GazeboRosApiPlugin::spawnSDFModel(gazebo_msgs::SpawnModel::Request &req,
   ignition::math::Quaterniond initial_q(req.initial_pose.orientation.w,req.initial_pose.orientation.x,req.initial_pose.orientation.y,req.initial_pose.orientation.z);
 
   // refernce frame for initial pose definition, modify initial pose if defined
-  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.reference_frame));
+  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.reference_frame));
   if (frame)
   {
     // convert to relative pose
@@ -725,7 +725,7 @@ bool GazeboRosApiPlugin::deleteModel(gazebo_msgs::DeleteModel::Request &req,
                                      gazebo_msgs::DeleteModel::Response &res)
 {
   // clear forces, etc for the body in question
-  gazebo::physics::ModelPtr model = world_->GetModel(req.model_name);
+  gazebo::physics::ModelPtr model = world_->ModelByName(req.model_name);
   if (!model)
   {
     ROS_ERROR_NAMED("api_plugin", "DeleteModel: model [%s] does not exist",req.model_name.c_str());
@@ -770,7 +770,7 @@ bool GazeboRosApiPlugin::deleteModel(gazebo_msgs::DeleteModel::Request &req,
     }
     {
       //boost::recursive_mutex::scoped_lock lock(*world->GetMRMutex());
-      if (!world_->GetModel(req.model_name)) break;
+      if (!world_->ModelByName(req.model_name)) break;
     }
     ROS_DEBUG_NAMED("api_plugin", "Waiting for model deletion (%s)",req.model_name.c_str());
     usleep(1000);
@@ -785,7 +785,7 @@ bool GazeboRosApiPlugin::deleteModel(gazebo_msgs::DeleteModel::Request &req,
 bool GazeboRosApiPlugin::deleteLight(gazebo_msgs::DeleteLight::Request &req,
                                      gazebo_msgs::DeleteLight::Response &res)
 {
-  gazebo::physics::LightPtr phy_light = world_->Light(req.light_name);
+  gazebo::physics::LightPtr phy_light = world_->LightByName(req.light_name);
 
   if (phy_light == NULL)
   {
@@ -801,7 +801,7 @@ bool GazeboRosApiPlugin::deleteLight(gazebo_msgs::DeleteLight::Request &req,
 
     for (int i = 0; i < 100; i++)
     {
-      phy_light = world_->Light(req.light_name);
+      phy_light = world_->LightByName(req.light_name);
       if (phy_light == NULL)
       {
         res.success = true;
@@ -822,8 +822,8 @@ bool GazeboRosApiPlugin::deleteLight(gazebo_msgs::DeleteLight::Request &req,
 bool GazeboRosApiPlugin::getModelState(gazebo_msgs::GetModelState::Request &req,
                                        gazebo_msgs::GetModelState::Response &res)
 {
-  gazebo::physics::ModelPtr model = world_->GetModel(req.model_name);
-  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.relative_entity_name));
+  gazebo::physics::ModelPtr model = world_->ModelByName(req.model_name);
+  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.relative_entity_name));
   if (!model)
   {
     ROS_ERROR_NAMED("api_plugin", "GetModelState: model [%s] does not exist",req.model_name.c_str());
@@ -863,8 +863,8 @@ bool GazeboRosApiPlugin::getModelState(gazebo_msgs::GetModelState::Request &req,
     ignition::math::Quaterniond model_rot = model_pose.Rot();
 
     // get model twist
-    ignition::math::Vector3d model_linear_vel  = model->GetWorldLinearVel().Ign();
-    ignition::math::Vector3d model_angular_vel = model->GetWorldAngularVel().Ign();
+    ignition::math::Vector3d model_linear_vel  = model->WorldLinearVel();
+    ignition::math::Vector3d model_angular_vel = model->WorldAngularVel();
 
 
     if (frame)
@@ -880,8 +880,8 @@ bool GazeboRosApiPlugin::getModelState(gazebo_msgs::GetModelState::Request &req,
       model_rot *= frame_pose.Rot().Inverse();
 
       // convert to relative rates
-      ignition::math::Vector3d frame_vpos = frame->GetWorldLinearVel().Ign(); // get velocity in gazebo frame
-      ignition::math::Vector3d frame_veul = frame->GetWorldAngularVel().Ign(); // get velocity in gazebo frame
+      ignition::math::Vector3d frame_vpos = frame->WorldLinearVel(); // get velocity in gazebo frame
+      ignition::math::Vector3d frame_veul = frame->WorldAngularVel(); // get velocity in gazebo frame
       model_linear_vel = frame_pose.Rot().RotateVector(model_linear_vel - frame_vpos);
       model_angular_vel = frame_pose.Rot().RotateVector(model_angular_vel - frame_veul);
     }
@@ -923,7 +923,7 @@ bool GazeboRosApiPlugin::getModelState(gazebo_msgs::GetModelState::Request &req,
 bool GazeboRosApiPlugin::getModelProperties(gazebo_msgs::GetModelProperties::Request &req,
                                             gazebo_msgs::GetModelProperties::Response &res)
 {
-  gazebo::physics::ModelPtr model = world_->GetModel(req.model_name);
+  gazebo::physics::ModelPtr model = world_->ModelByName(req.model_name);
   if (!model)
   {
     ROS_ERROR_NAMED("api_plugin", "GetModelProperties: model [%s] does not exist",req.model_name.c_str());
@@ -985,10 +985,10 @@ bool GazeboRosApiPlugin::getModelProperties(gazebo_msgs::GetModelProperties::Req
 bool GazeboRosApiPlugin::getWorldProperties(gazebo_msgs::GetWorldProperties::Request &req,
                                             gazebo_msgs::GetWorldProperties::Response &res)
 {
-  res.sim_time = world_->GetSimTime().Double();
+  res.sim_time = world_->SimTime().Double();
   res.model_names.clear();
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
-    res.model_names.push_back(world_->GetModel(i)->GetName());
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
+    res.model_names.push_back(world_->ModelByIndex(i)->GetName());
   gzerr << "disablign rendering has not been implemented, rendering is always enabled\n";
   res.rendering_enabled = true; //world->GetRenderEngineEnabled();
   res.success = true;
@@ -1000,9 +1000,9 @@ bool GazeboRosApiPlugin::getJointProperties(gazebo_msgs::GetJointProperties::Req
                                             gazebo_msgs::GetJointProperties::Response &res)
 {
   gazebo::physics::JointPtr joint;
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
   {
-    joint = world_->GetModel(i)->GetJoint(req.joint_name);
+    joint = world_->ModelByIndex(i)->GetJoint(req.joint_name);
     if (joint) break;
   }
 
@@ -1039,7 +1039,7 @@ bool GazeboRosApiPlugin::getJointProperties(gazebo_msgs::GetJointProperties::Req
 bool GazeboRosApiPlugin::getLinkProperties(gazebo_msgs::GetLinkProperties::Request &req,
                                            gazebo_msgs::GetLinkProperties::Response &res)
 {
-  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.link_name));
+  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.link_name));
   if (!body)
   {
     res.success = false;
@@ -1093,8 +1093,8 @@ bool GazeboRosApiPlugin::getLinkProperties(gazebo_msgs::GetLinkProperties::Reque
 bool GazeboRosApiPlugin::getLinkState(gazebo_msgs::GetLinkState::Request &req,
                                       gazebo_msgs::GetLinkState::Response &res)
 {
-  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.link_name));
-  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.reference_frame));
+  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.link_name));
+  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.reference_frame));
 
   if (!body)
   {
@@ -1110,8 +1110,8 @@ bool GazeboRosApiPlugin::getLinkState(gazebo_msgs::GetLinkState::Request &req,
   ignition::math::Pose3d body_pose = body->GetWorldPose().Ign();
 #endif
   // Get inertial rates
-  ignition::math::Vector3d body_vpos = body->GetWorldLinearVel().Ign(); // get velocity in gazebo frame
-  ignition::math::Vector3d body_veul = body->GetWorldAngularVel().Ign(); // get velocity in gazebo frame
+  ignition::math::Vector3d body_vpos = body->WorldLinearVel(); // get velocity in gazebo frame
+  ignition::math::Vector3d body_veul = body->WorldAngularVel(); // get velocity in gazebo frame
 
   if (frame)
   {
@@ -1126,8 +1126,8 @@ bool GazeboRosApiPlugin::getLinkState(gazebo_msgs::GetLinkState::Request &req,
     body_pose.Rot() *= frame_pose.Rot().Inverse();
 
     // convert to relative rates
-    ignition::math::Vector3d frame_vpos = frame->GetWorldLinearVel().Ign(); // get velocity in gazebo frame
-    ignition::math::Vector3d frame_veul = frame->GetWorldAngularVel().Ign(); // get velocity in gazebo frame
+    ignition::math::Vector3d frame_vpos = frame->WorldLinearVel(); // get velocity in gazebo frame
+    ignition::math::Vector3d frame_veul = frame->WorldAngularVel(); // get velocity in gazebo frame
     body_vpos = frame_pose.Rot().RotateVector(body_vpos - frame_vpos);
     body_veul = frame_pose.Rot().RotateVector(body_veul - frame_veul);
   }
@@ -1167,7 +1167,7 @@ bool GazeboRosApiPlugin::getLinkState(gazebo_msgs::GetLinkState::Request &req,
 bool GazeboRosApiPlugin::getLightProperties(gazebo_msgs::GetLightProperties::Request &req,
                                                gazebo_msgs::GetLightProperties::Response &res)
 {
-  gazebo::physics::LightPtr phy_light = world_->Light(req.light_name);
+  gazebo::physics::LightPtr phy_light = world_->LightByName(req.light_name);
 
   if (phy_light == NULL)
   {
@@ -1197,7 +1197,7 @@ bool GazeboRosApiPlugin::getLightProperties(gazebo_msgs::GetLightProperties::Req
 bool GazeboRosApiPlugin::setLightProperties(gazebo_msgs::SetLightProperties::Request &req,
                                                gazebo_msgs::SetLightProperties::Response &res)
 {
-  gazebo::physics::LightPtr phy_light = world_->Light(req.light_name);
+  gazebo::physics::LightPtr phy_light = world_->LightByName(req.light_name);
 
   if (phy_light == NULL)
   {
@@ -1230,7 +1230,7 @@ bool GazeboRosApiPlugin::setLightProperties(gazebo_msgs::SetLightProperties::Req
 bool GazeboRosApiPlugin::setLinkProperties(gazebo_msgs::SetLinkProperties::Request &req,
                                            gazebo_msgs::SetLinkProperties::Response &res)
 {
-  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.link_name));
+  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.link_name));
   if (!body)
   {
     res.success = false;
@@ -1262,11 +1262,11 @@ bool GazeboRosApiPlugin::setPhysicsProperties(gazebo_msgs::SetPhysicsProperties:
   world_->SetGravity(ignition::math::Vector3d(req.gravity.x,req.gravity.y,req.gravity.z));
 
   // supported updates
-  gazebo::physics::PhysicsEnginePtr pe = (world_->GetPhysicsEngine());
+  gazebo::physics::PhysicsEnginePtr pe = (world_->Physics());
   pe->SetMaxStepSize(req.time_step);
   pe->SetRealTimeUpdateRate(req.max_update_rate);
 
-  if (world_->GetPhysicsEngine()->GetType() == "ode")
+  if (world_->Physics()->GetType() == "ode")
   {
     // stuff only works in ODE right now
     pe->SetAutoDisableFlag(req.ode_config.auto_disable_bodies);
@@ -1289,9 +1289,9 @@ bool GazeboRosApiPlugin::setPhysicsProperties(gazebo_msgs::SetPhysicsProperties:
   else
   {
     /// \TODO: add support for simbody, dart and bullet physics properties.
-    ROS_ERROR_NAMED("api_plugin", "ROS set_physics_properties service call does not yet support physics engine [%s].", world_->GetPhysicsEngine()->GetType().c_str());
+    ROS_ERROR_NAMED("api_plugin", "ROS set_physics_properties service call does not yet support physics engine [%s].", world_->Physics()->GetType().c_str());
     res.success = false;
-    res.status_message = "Physics engine [" + world_->GetPhysicsEngine()->GetType() + "]: set_physics_properties not supported.";
+    res.status_message = "Physics engine [" + world_->Physics()->GetType() + "]: set_physics_properties not supported.";
   }
   return res.success;
 }
@@ -1300,35 +1300,35 @@ bool GazeboRosApiPlugin::getPhysicsProperties(gazebo_msgs::GetPhysicsProperties:
                                               gazebo_msgs::GetPhysicsProperties::Response &res)
 {
   // supported updates
-  res.time_step = world_->GetPhysicsEngine()->GetMaxStepSize();
+  res.time_step = world_->Physics()->GetMaxStepSize();
   res.pause = world_->IsPaused();
-  res.max_update_rate = world_->GetPhysicsEngine()->GetRealTimeUpdateRate();
+  res.max_update_rate = world_->Physics()->GetRealTimeUpdateRate();
   ignition::math::Vector3d gravity = world_->Gravity();
   res.gravity.x = gravity.X();
   res.gravity.y = gravity.Y();
   res.gravity.z = gravity.Z();
 
   // stuff only works in ODE right now
-  if (world_->GetPhysicsEngine()->GetType() == "ode")
+  if (world_->Physics()->GetType() == "ode")
   {
     res.ode_config.auto_disable_bodies =
-      world_->GetPhysicsEngine()->GetAutoDisableFlag();
+      world_->Physics()->GetAutoDisableFlag();
     res.ode_config.sor_pgs_precon_iters = boost::any_cast<int>(
-      world_->GetPhysicsEngine()->GetParam("precon_iters"));
+      world_->Physics()->GetParam("precon_iters"));
     res.ode_config.sor_pgs_iters = boost::any_cast<int>(
-        world_->GetPhysicsEngine()->GetParam("iters"));
+        world_->Physics()->GetParam("iters"));
     res.ode_config.sor_pgs_w = boost::any_cast<double>(
-        world_->GetPhysicsEngine()->GetParam("sor"));
+        world_->Physics()->GetParam("sor"));
     res.ode_config.contact_surface_layer = boost::any_cast<double>(
-      world_->GetPhysicsEngine()->GetParam("contact_surface_layer"));
+      world_->Physics()->GetParam("contact_surface_layer"));
     res.ode_config.contact_max_correcting_vel = boost::any_cast<double>(
-      world_->GetPhysicsEngine()->GetParam("contact_max_correcting_vel"));
+      world_->Physics()->GetParam("contact_max_correcting_vel"));
     res.ode_config.cfm = boost::any_cast<double>(
-        world_->GetPhysicsEngine()->GetParam("cfm"));
+        world_->Physics()->GetParam("cfm"));
     res.ode_config.erp = boost::any_cast<double>(
-        world_->GetPhysicsEngine()->GetParam("erp"));
+        world_->Physics()->GetParam("erp"));
     res.ode_config.max_contacts = boost::any_cast<int>(
-      world_->GetPhysicsEngine()->GetParam("max_contacts"));
+      world_->Physics()->GetParam("max_contacts"));
 
     res.success = true;
     res.status_message = "GetPhysicsProperties: got properties";
@@ -1336,9 +1336,9 @@ bool GazeboRosApiPlugin::getPhysicsProperties(gazebo_msgs::GetPhysicsProperties:
   else
   {
     /// \TODO: add support for simbody, dart and bullet physics properties.
-    ROS_ERROR_NAMED("api_plugin", "ROS get_physics_properties service call does not yet support physics engine [%s].", world_->GetPhysicsEngine()->GetType().c_str());
+    ROS_ERROR_NAMED("api_plugin", "ROS get_physics_properties service call does not yet support physics engine [%s].", world_->Physics()->GetType().c_str());
     res.success = false;
-    res.status_message = "Physics engine [" + world_->GetPhysicsEngine()->GetType() + "]: get_physics_properties not supported.";
+    res.status_message = "Physics engine [" + world_->Physics()->GetType() + "]: get_physics_properties not supported.";
   }
   return res.success;
 }
@@ -1348,9 +1348,9 @@ bool GazeboRosApiPlugin::setJointProperties(gazebo_msgs::SetJointProperties::Req
 {
   /// @todo: current settings only allows for setting of 1DOF joints (e.g. HingeJoint and SliderJoint) correctly.
   gazebo::physics::JointPtr joint;
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
   {
-    joint = world_->GetModel(i)->GetJoint(req.joint_name);
+    joint = world_->ModelByIndex(i)->GetJoint(req.joint_name);
     if (joint) break;
   }
 
@@ -1399,7 +1399,7 @@ bool GazeboRosApiPlugin::setModelState(gazebo_msgs::SetModelState::Request &req,
   ignition::math::Vector3d target_pos_dot(req.model_state.twist.linear.x,req.model_state.twist.linear.y,req.model_state.twist.linear.z);
   ignition::math::Vector3d target_rot_dot(req.model_state.twist.angular.x,req.model_state.twist.angular.y,req.model_state.twist.angular.z);
 
-  gazebo::physics::ModelPtr model = world_->GetModel(req.model_state.model_name);
+  gazebo::physics::ModelPtr model = world_->ModelByName(req.model_state.model_name);
   if (!model)
   {
     ROS_ERROR_NAMED("api_plugin", "Updating ModelState: model [%s] does not exist",req.model_state.model_name.c_str());
@@ -1409,7 +1409,7 @@ bool GazeboRosApiPlugin::setModelState(gazebo_msgs::SetModelState::Request &req,
   }
   else
   {
-    gazebo::physics::LinkPtr relative_entity = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.model_state.reference_frame));
+    gazebo::physics::LinkPtr relative_entity = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.model_state.reference_frame));
     if (relative_entity)
     {
 #if GAZEBO_MAJOR_VERSION >= 8
@@ -1478,17 +1478,17 @@ bool GazeboRosApiPlugin::applyJointEffort(gazebo_msgs::ApplyJointEffort::Request
                                           gazebo_msgs::ApplyJointEffort::Response &res)
 {
   gazebo::physics::JointPtr joint;
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
   {
-    joint = world_->GetModel(i)->GetJoint(req.joint_name);
+    joint = world_->ModelByIndex(i)->GetJoint(req.joint_name);
     if (joint)
     {
       GazeboRosApiPlugin::ForceJointJob* fjj = new GazeboRosApiPlugin::ForceJointJob;
       fjj->joint = joint;
       fjj->force = req.effort;
       fjj->start_time = req.start_time;
-      if (fjj->start_time < ros::Time(world_->GetSimTime().Double()))
-        fjj->start_time = ros::Time(world_->GetSimTime().Double());
+      if (fjj->start_time < ros::Time(world_->SimTime().Double()))
+        fjj->start_time = ros::Time(world_->SimTime().Double());
       fjj->duration = req.duration;
       lock_.lock();
       force_joint_jobs_.push_back(fjj);
@@ -1592,7 +1592,7 @@ bool GazeboRosApiPlugin::setModelConfiguration(gazebo_msgs::SetModelConfiguratio
   std::string gazebo_model_name = req.model_name;
 
   // search for model with name
-  gazebo::physics::ModelPtr gazebo_model = world_->GetModel(req.model_name);
+  gazebo::physics::ModelPtr gazebo_model = world_->ModelByName(req.model_name);
   if (!gazebo_model)
   {
     ROS_ERROR_NAMED("api_plugin", "SetModelConfiguration: model [%s] does not exist",gazebo_model_name.c_str());
@@ -1633,8 +1633,8 @@ bool GazeboRosApiPlugin::setModelConfiguration(gazebo_msgs::SetModelConfiguratio
 bool GazeboRosApiPlugin::setLinkState(gazebo_msgs::SetLinkState::Request &req,
                                       gazebo_msgs::SetLinkState::Response &res)
 {
-  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.link_state.link_name));
-  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.link_state.reference_frame));
+  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.link_state.link_name));
+  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.link_state.reference_frame));
   if (!body)
   {
     ROS_ERROR_NAMED("api_plugin", "Updating LinkState: link [%s] does not exist",req.link_state.link_name.c_str());
@@ -1667,8 +1667,8 @@ bool GazeboRosApiPlugin::setLinkState(gazebo_msgs::SetLinkState::Request &req,
     target_pose.Pos() = frame_pos + frame_rot.RotateVector(target_pos);
     target_pose.Rot() = frame_rot * target_pose.Rot();
 
-    ignition::math::Vector3d frame_linear_vel = frame->GetWorldLinearVel().Ign();
-    ignition::math::Vector3d frame_angular_vel = frame->GetWorldAngularVel().Ign();
+    ignition::math::Vector3d frame_linear_vel = frame->WorldLinearVel();
+    ignition::math::Vector3d frame_angular_vel = frame->WorldAngularVel();
     target_linear_vel -= frame_linear_vel;
     target_angular_vel -= frame_angular_vel;
   }
@@ -1726,8 +1726,8 @@ void GazeboRosApiPlugin::transformWrench( ignition::math::Vector3d &target_force
 bool GazeboRosApiPlugin::applyBodyWrench(gazebo_msgs::ApplyBodyWrench::Request &req,
                                          gazebo_msgs::ApplyBodyWrench::Response &res)
 {
-  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.body_name));
-  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->GetEntity(req.reference_frame));
+  gazebo::physics::LinkPtr body = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.body_name));
+  gazebo::physics::LinkPtr frame = boost::dynamic_pointer_cast<gazebo::physics::Link>(world_->EntityByName(req.reference_frame));
   if (!body)
   {
     ROS_ERROR_NAMED("api_plugin", "ApplyBodyWrench: body [%s] does not exist",req.body_name.c_str());
@@ -1837,8 +1837,8 @@ bool GazeboRosApiPlugin::applyBodyWrench(gazebo_msgs::ApplyBodyWrench::Request &
   wej->force = target_force;
   wej->torque = target_torque;
   wej->start_time = req.start_time;
-  if (wej->start_time < ros::Time(world_->GetSimTime().Double()))
-    wej->start_time = ros::Time(world_->GetSimTime().Double());
+  if (wej->start_time < ros::Time(world_->SimTime().Double()))
+    wej->start_time = ros::Time(world_->SimTime().Double());
   wej->duration = req.duration;
   lock_.lock();
   wrench_body_jobs_.push_back(wej);
@@ -1879,8 +1879,8 @@ void GazeboRosApiPlugin::wrenchBodySchedulerSlot()
   for (std::vector<GazeboRosApiPlugin::WrenchBodyJob*>::iterator iter=wrench_body_jobs_.begin();iter!=wrench_body_jobs_.end();)
   {
     // check times and apply wrench if necessary
-    if (ros::Time(world_->GetSimTime().Double()) >= (*iter)->start_time)
-      if (ros::Time(world_->GetSimTime().Double()) <= (*iter)->start_time+(*iter)->duration ||
+    if (ros::Time(world_->SimTime().Double()) >= (*iter)->start_time)
+      if (ros::Time(world_->SimTime().Double()) <= (*iter)->start_time+(*iter)->duration ||
           (*iter)->duration.toSec() < 0.0)
       {
         if ((*iter)->body) // if body exists
@@ -1892,7 +1892,7 @@ void GazeboRosApiPlugin::wrenchBodySchedulerSlot()
           (*iter)->duration.fromSec(0.0); // mark for delete
       }
 
-    if (ros::Time(world_->GetSimTime().Double()) > (*iter)->start_time+(*iter)->duration &&
+    if (ros::Time(world_->SimTime().Double()) > (*iter)->start_time+(*iter)->duration &&
         (*iter)->duration.toSec() >= 0.0)
     {
       // remove from queue once expires
@@ -1913,8 +1913,8 @@ void GazeboRosApiPlugin::forceJointSchedulerSlot()
   for (std::vector<GazeboRosApiPlugin::ForceJointJob*>::iterator iter=force_joint_jobs_.begin();iter!=force_joint_jobs_.end();)
   {
     // check times and apply force if necessary
-    if (ros::Time(world_->GetSimTime().Double()) >= (*iter)->start_time)
-      if (ros::Time(world_->GetSimTime().Double()) <= (*iter)->start_time+(*iter)->duration ||
+    if (ros::Time(world_->SimTime().Double()) >= (*iter)->start_time)
+      if (ros::Time(world_->SimTime().Double()) <= (*iter)->start_time+(*iter)->duration ||
           (*iter)->duration.toSec() < 0.0)
       {
         if ((*iter)->joint) // if joint exists
@@ -1923,7 +1923,7 @@ void GazeboRosApiPlugin::forceJointSchedulerSlot()
           (*iter)->duration.fromSec(0.0); // mark for delete
       }
 
-    if (ros::Time(world_->GetSimTime().Double()) > (*iter)->start_time+(*iter)->duration &&
+    if (ros::Time(world_->SimTime().Double()) > (*iter)->start_time+(*iter)->duration &&
         (*iter)->duration.toSec() >= 0.0)
     {
       // remove from queue once expires
@@ -1938,7 +1938,7 @@ void GazeboRosApiPlugin::forceJointSchedulerSlot()
 void GazeboRosApiPlugin::publishSimTime(const boost::shared_ptr<gazebo::msgs::WorldStatistics const> &msg)
 {
   ROS_ERROR_NAMED("api_plugin", "CLOCK2");
-  gazebo::common::Time sim_time = world_->GetSimTime();
+  gazebo::common::Time sim_time = world_->SimTime();
   if (pub_clock_frequency_ > 0 && (sim_time - last_pub_clock_time_).Double() < 1.0/pub_clock_frequency_)
     return;
 
@@ -1951,11 +1951,11 @@ void GazeboRosApiPlugin::publishSimTime(const boost::shared_ptr<gazebo::msgs::Wo
 }
 void GazeboRosApiPlugin::publishSimTime()
 {
-  gazebo::common::Time sim_time = world_->GetSimTime();
+  gazebo::common::Time sim_time = world_->SimTime();
   if (pub_clock_frequency_ > 0 && (sim_time - last_pub_clock_time_).Double() < 1.0/pub_clock_frequency_)
     return;
 
-  gazebo::common::Time currentTime = world_->GetSimTime();
+  gazebo::common::Time currentTime = world_->SimTime();
   rosgraph_msgs::Clock ros_time_;
   ros_time_.clock.fromSec(currentTime.Double());
   //  publish time to ros
@@ -1968,9 +1968,9 @@ void GazeboRosApiPlugin::publishLinkStates()
   gazebo_msgs::LinkStates link_states;
 
   // fill link_states
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
   {
-    gazebo::physics::ModelPtr model = world_->GetModel(i);
+    gazebo::physics::ModelPtr model = world_->ModelByIndex(i);
 
     for (unsigned int j = 0 ; j < model->GetChildCount(); j ++)
     {
@@ -1995,8 +1995,8 @@ void GazeboRosApiPlugin::publishLinkStates()
         pose.orientation.y = rot.Y();
         pose.orientation.z = rot.Z();
         link_states.pose.push_back(pose);
-        ignition::math::Vector3d linear_vel  = body->GetWorldLinearVel().Ign();
-        ignition::math::Vector3d angular_vel = body->GetWorldAngularVel().Ign();
+        ignition::math::Vector3d linear_vel  = body->WorldLinearVel();
+        ignition::math::Vector3d angular_vel = body->WorldAngularVel();
         geometry_msgs::Twist twist;
         twist.linear.x = linear_vel.X();
         twist.linear.y = linear_vel.Y();
@@ -2017,9 +2017,9 @@ void GazeboRosApiPlugin::publishModelStates()
   gazebo_msgs::ModelStates model_states;
 
   // fill model_states
-  for (unsigned int i = 0; i < world_->GetModelCount(); i ++)
+  for (unsigned int i = 0; i < world_->ModelCount(); i ++)
   {
-    gazebo::physics::ModelPtr model = world_->GetModel(i);
+    gazebo::physics::ModelPtr model = world_->ModelByIndex(i);
     model_states.name.push_back(model->GetName());
     geometry_msgs::Pose pose;
 #if GAZEBO_MAJOR_VERSION >= 8
@@ -2037,8 +2037,8 @@ void GazeboRosApiPlugin::publishModelStates()
     pose.orientation.y = rot.Y();
     pose.orientation.z = rot.Z();
     model_states.pose.push_back(pose);
-    ignition::math::Vector3d linear_vel  = model->GetWorldLinearVel().Ign();
-    ignition::math::Vector3d angular_vel = model->GetWorldAngularVel().Ign();
+    ignition::math::Vector3d linear_vel  = model->WorldLinearVel();
+    ignition::math::Vector3d angular_vel = model->WorldAngularVel();
     geometry_msgs::Twist twist;
     twist.linear.x = linear_vel.X();
     twist.linear.y = linear_vel.Y();
@@ -2438,8 +2438,8 @@ bool GazeboRosApiPlugin::spawnAndConform(TiXmlDocument &gazebo_model_xml, const 
   request_pub_->Publish(*entity_info_msg,true);
   // todo: should wait for response response_sub_, check to see that if _msg->response == "nonexistant"
 
-  gazebo::physics::ModelPtr model = world_->GetModel(model_name);
-  gazebo::physics::LightPtr light = world_->Light(model_name);
+  gazebo::physics::ModelPtr model = world_->ModelByName(model_name);
+  gazebo::physics::LightPtr light = world_->LightByName(model_name);
   if ((isLight && light != NULL) || (model != NULL))
   {
     ROS_ERROR_NAMED("api_plugin", "SpawnModel: Failure - model name %s already exist.",model_name.c_str());
@@ -2481,8 +2481,8 @@ bool GazeboRosApiPlugin::spawnAndConform(TiXmlDocument &gazebo_model_xml, const 
 
     {
       //boost::recursive_mutex::scoped_lock lock(*world->GetMRMutex());
-      if ((isLight && world_->Light(model_name) != NULL)
-          || (world_->GetModel(model_name) != NULL))
+      if ((isLight && world_->LightByName(model_name) != NULL)
+          || (world_->ModelByName(model_name) != NULL))
         break;
     }
 

@@ -165,8 +165,8 @@ namespace gazebo
     ignition::math::Vector3d relativeAngularVel = floating_link_->RelativeAngularVel();
 #else
     ignition::math::Pose3d world_pose = floating_link_->GetDirtyPose().Ign();
-    ignition::math::Vector3d worldLinearVel = floating_link_->GetWorldLinearVel().Ign();
-    ignition::math::Vector3d relativeAngularVel = floating_link_->GetRelativeAngularVel().Ign();
+    ignition::math::Vector3d worldLinearVel = floating_link_->WorldLinearVel();
+    ignition::math::Vector3d relativeAngularVel = floating_link_->RelativeAngularVel().Ign();
 #endif
     ignition::math::Vector3d err_pos = hog_desired.Pos() - world_pose.Pos();
     // Get exponential coordinates for rotation

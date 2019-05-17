@@ -145,7 +145,7 @@ void GazeboRosJointTrajectory::LoadThread()
   }
 #endif
 
-  this->last_time_ = this->world_->GetSimTime();
+  this->last_time_ = this->world_->SimTime();
 
   // start custom queue for joint trajectory plugin ros topics
   this->callback_queue_thread_ =
@@ -173,7 +173,7 @@ void GazeboRosJointTrajectory::SetTrajectory(
       this->reference_link_name_ != "map")
   {
     physics::EntityPtr ent =
-      this->world_->GetEntity(this->reference_link_name_);
+      this->world_->EntityByName(this->reference_link_name_);
     if (ent)
       this->reference_link_ = boost::dynamic_pointer_cast<physics::Link>(ent);
     if (!this->reference_link_)
@@ -213,7 +213,7 @@ void GazeboRosJointTrajectory::SetTrajectory(
   // trajectory start time
   this->trajectory_start = gazebo::common::Time(trajectory->header.stamp.sec,
                                                 trajectory->header.stamp.nsec);
-  common::Time cur_time = this->world_->GetSimTime();
+  common::Time cur_time = this->world_->SimTime();
   if (this->trajectory_start < cur_time)
     this->trajectory_start = cur_time;
 
@@ -252,7 +252,7 @@ bool GazeboRosJointTrajectory::SetTrajectory(
       this->reference_link_name_ != "map")
   {
     physics::EntityPtr ent =
-      this->world_->GetEntity(this->reference_link_name_);
+      this->world_->EntityByName(this->reference_link_name_);
     if (ent)
       this->reference_link_ = boost::shared_dynamic_cast<physics::Link>(ent);
     if (!this->reference_link_)
@@ -322,7 +322,7 @@ void GazeboRosJointTrajectory::UpdateStates()
   boost::mutex::scoped_lock lock(this->update_mutex);
   if (this->has_trajectory_)
   {
-    common::Time cur_time = this->world_->GetSimTime();
+    common::Time cur_time = this->world_->SimTime();
     // roll out trajectory via set model configuration
     // gzerr << "i[" << trajectory_index  << "] time "
     //       << trajectory_start << " now: " << cur_time << " : "<< "\n";
