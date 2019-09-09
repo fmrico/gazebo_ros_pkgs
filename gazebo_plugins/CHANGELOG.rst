@@ -2,8 +2,8 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2019-09-09)
+------------------
 * Fixed shadowed variables
 * added melodic API changes
 * Contributors: Jordan Palacios, Sai Kishor Kothakota
