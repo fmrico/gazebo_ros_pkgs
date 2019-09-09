@@ -2,6 +2,12 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed shadowed variables
+* added melodic API changes
+* Contributors: Jordan Palacios, Sai Kishor Kothakota
+
 2.6.8 (2018-10-25)
 ------------------
 * Merge branch 'add-required' into 'erbium-devel'
