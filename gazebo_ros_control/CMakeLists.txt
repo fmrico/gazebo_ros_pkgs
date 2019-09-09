@@ -50,10 +50,12 @@ catkin_package(
 )
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(include
-  ${Boost_INCLUDE_DIR}
-  ${catkin_INCLUDE_DIRS}
-  ${GAZEBO_INCLUDE_DIRS}
+include_directories(include)
+include_directories(
+  SYSTEM
+    ${Boost_INCLUDE_DIR}
+    ${catkin_INCLUDE_DIRS}
+    ${GAZEBO_INCLUDE_DIRS}
 )
 
 ## Libraries

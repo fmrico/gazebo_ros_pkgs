@@ -295,7 +295,7 @@ void GazeboRosProsilica::pollCallback(polled_camera::GetPolledImage::Request& re
           // copy data into ROI image
           this->roiImageMsg = &image;
           this->roiImageMsg->header.frame_id = this->frame_name_;
-          common::Time roiLastRenderTime = this->parentSensor_->LastMeasurementTime();
+          roiLastRenderTime = this->parentSensor_->LastMeasurementTime();
           this->roiImageMsg->header.stamp.sec = roiLastRenderTime.sec;
           this->roiImageMsg->header.stamp.nsec = roiLastRenderTime.nsec;
 

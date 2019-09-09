@@ -2101,23 +2101,23 @@ void GazeboRosApiPlugin::physicsReconfigureCallback(gazebo_ros::PhysicsConfig &c
     if (changed)
     {
       // pause simulation if requested
-      gazebo_msgs::SetPhysicsProperties srv;
-      srv.request.time_step                             = config.time_step                   ;
-      srv.request.max_update_rate                       = config.max_update_rate             ;
-      srv.request.gravity.x                             = config.gravity_x                   ;
-      srv.request.gravity.y                             = config.gravity_y                   ;
-      srv.request.gravity.z                             = config.gravity_z                   ;
-      srv.request.ode_config.auto_disable_bodies        = config.auto_disable_bodies         ;
-      srv.request.ode_config.sor_pgs_precon_iters       = config.sor_pgs_precon_iters        ;
-      srv.request.ode_config.sor_pgs_iters              = config.sor_pgs_iters               ;
-      srv.request.ode_config.sor_pgs_rms_error_tol      = config.sor_pgs_rms_error_tol       ;
-      srv.request.ode_config.sor_pgs_w                  = config.sor_pgs_w                   ;
-      srv.request.ode_config.contact_surface_layer      = config.contact_surface_layer       ;
-      srv.request.ode_config.contact_max_correcting_vel = config.contact_max_correcting_vel  ;
-      srv.request.ode_config.cfm                        = config.cfm                         ;
-      srv.request.ode_config.erp                        = config.erp                         ;
-      srv.request.ode_config.max_contacts               = config.max_contacts                ;
-      physics_reconfigure_set_client_.call(srv);
+      gazebo_msgs::SetPhysicsProperties set_srv;
+      set_srv.request.time_step                             = config.time_step                   ;
+      set_srv.request.max_update_rate                       = config.max_update_rate             ;
+      set_srv.request.gravity.x                             = config.gravity_x                   ;
+      set_srv.request.gravity.y                             = config.gravity_y                   ;
+      set_srv.request.gravity.z                             = config.gravity_z                   ;
+      set_srv.request.ode_config.auto_disable_bodies        = config.auto_disable_bodies         ;
+      set_srv.request.ode_config.sor_pgs_precon_iters       = config.sor_pgs_precon_iters        ;
+      set_srv.request.ode_config.sor_pgs_iters              = config.sor_pgs_iters               ;
+      set_srv.request.ode_config.sor_pgs_rms_error_tol      = config.sor_pgs_rms_error_tol       ;
+      set_srv.request.ode_config.sor_pgs_w                  = config.sor_pgs_w                   ;
+      set_srv.request.ode_config.contact_surface_layer      = config.contact_surface_layer       ;
+      set_srv.request.ode_config.contact_max_correcting_vel = config.contact_max_correcting_vel  ;
+      set_srv.request.ode_config.cfm                        = config.cfm                         ;
+      set_srv.request.ode_config.erp                        = config.erp                         ;
+      set_srv.request.ode_config.max_contacts               = config.max_contacts                ;
+      physics_reconfigure_set_client_.call(set_srv);
       ROS_INFO_NAMED("api_plugin", "physics dynamics reconfigure update complete");
     }
     ROS_INFO_NAMED("api_plugin", "physics dynamics reconfigure complete");
@@ -2454,9 +2454,9 @@ bool GazeboRosApiPlugin::spawnAndConform(TiXmlDocument &gazebo_model_xml, const 
     // Publish the light message to spawn the light (Gazebo 7 and up)
     sdf::SDF sdf_light;
     sdf_light.SetFromString(gazebo_model_xml_string);
-    gazebo::msgs::Light msg = gazebo::msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
-    msg.set_name(model_name);
-    factory_light_pub_->Publish(msg);
+    gazebo::msgs::Light light_msg = gazebo::msgs::LightFromSDF(sdf_light.Root()->GetElement("light"));
+    light_msg.set_name(model_name);
+    factory_light_pub_->Publish(light_msg);
   }
   else
   {
