@@ -57,7 +57,8 @@ generate_dynamic_reconfigure_options(
   cfg/Hokuyo.cfg
 )
 
-include_directories(include
+include_directories(include)
+include_directories(SYSTEM
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${OGRE_INCLUDE_DIRS}

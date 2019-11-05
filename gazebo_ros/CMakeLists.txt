@@ -51,7 +51,9 @@ catkin_package(
 )
 
 include_directories(
-  include
+  include)
+include_directories(
+  SYSTEM
   ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${TinyXML_INCLUDE_DIRS})

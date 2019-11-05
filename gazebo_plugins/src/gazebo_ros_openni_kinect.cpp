@@ -334,18 +334,18 @@ bool GazeboRosOpenniKinect::FillPointCloudHelper(
       if (cols_arg>1) yAngle = atan2( (double)i - 0.5*(double)(cols_arg-1), fl);
       else            yAngle = 0.0;
 
-      double depth = toCopyFrom[index++]; // + 0.0*this->myParent->GetNearClip();
+      double aux_depth = toCopyFrom[index++]; // + 0.0*this->myParent->GetNearClip();
 
-      if(depth > this->point_cloud_cutoff_ &&
-         depth < this->point_cloud_cutoff_max_)
+      if(aux_depth > this->point_cloud_cutoff_ &&
+         aux_depth < this->point_cloud_cutoff_max_)
       {
         // in optical frame
         // hardcoded rotation rpy(-M_PI/2, 0, -M_PI/2) is built-in
         // to urdf, where the *_optical_frame should have above relative
         // rotation from the physical camera *_frame
-        *iter_x = depth * tan(yAngle);
-        *iter_y = depth * tan(pAngle);
-        *iter_z = depth;
+        *iter_x = aux_depth * tan(yAngle);
+        *iter_y = aux_depth * tan(pAngle);
+        *iter_z = aux_depth;
       }
       else //point in the unseeable range
       {
@@ -411,12 +411,12 @@ bool GazeboRosOpenniKinect::FillDepthImageHelper(
   {
     for (uint32_t i = 0; i < cols_arg; i++)
     {
-      float depth = toCopyFrom[index++];
+      float aux_depth = toCopyFrom[index++];
 
-      if (depth > this->point_cloud_cutoff_ &&
-          depth < this->point_cloud_cutoff_max_)
+      if (aux_depth > this->point_cloud_cutoff_ &&
+          aux_depth < this->point_cloud_cutoff_max_)
       {
-        dest[i + j * cols_arg] = depth;
+        dest[i + j * cols_arg] = aux_depth;
       }
       else //point in the unseeable range
       {
