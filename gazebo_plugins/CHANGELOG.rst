@@ -2,6 +2,11 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix shadowed variables
+* Contributors: Victor Lopez
+
 2.6.8 (2018-10-25)
 ------------------
 
