@@ -2,6 +2,9 @@
 Changelog for package gazebo_dev
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 3.0.0 (2019-09-09)
 ------------------
 * added melodic API changes

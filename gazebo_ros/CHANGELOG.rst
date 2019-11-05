@@ -2,6 +2,11 @@
 Changelog for package gazebo_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix shadowed variables
+* Contributors: Victor Lopez
+
 3.0.0 (2019-09-09)
 ------------------
 * Fixed shadowed variables
