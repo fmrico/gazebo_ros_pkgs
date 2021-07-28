@@ -2,8 +2,8 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+4.0.0 (2021-07-28)
+------------------
 * Merge branch 'noetic-fixes' into 'gallium-devel'
   Noetic fixes
   See merge request common/gazebo_ros_pkgs!6
