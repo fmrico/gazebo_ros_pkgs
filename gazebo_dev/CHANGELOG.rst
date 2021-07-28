@@ -2,6 +2,14 @@
 Changelog for package gazebo_dev
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'noetic-fixes' into 'gallium-devel'
+  Noetic fixes
+  See merge request common/gazebo_ros_pkgs!6
+* Updated libgazebo dev version for noetic
+* Contributors: Jordan Palacios
+
 3.0.1 (2019-11-05)
 ------------------
 

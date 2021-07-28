@@ -2,6 +2,15 @@
 Changelog for package gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'noetic-fixes' into 'gallium-devel'
+  Noetic fixes
+  See merge request common/gazebo_ros_pkgs!6
+* Using same calls as upstream
+* Fixing opencv headers
+* Contributors: Jordan Palacios
+
 3.0.1 (2019-11-05)
 ------------------
 * Fix shadowed variables
