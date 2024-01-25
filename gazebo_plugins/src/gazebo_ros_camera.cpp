@@ -496,7 +496,7 @@ void GazeboRosCamera::Load(gazebo::sensors::SensorPtr _sensor, sdf::ElementPtr _
     impl_->cloud_msg_.fields[3].datatype = 7;
     impl_->cloud_msg_.fields[3].count = 1;
 
-    impl_->cloud_msg_.header.frame_id = impl_->frame_name_;
+    impl_->cloud_msg_.header.frame_id = "camera_depth_optical_frame";
   }
 
   // Dynamic reconfigure
