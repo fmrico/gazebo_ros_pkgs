@@ -475,7 +475,7 @@ void GazeboRosCamera::Load(gazebo::sensors::SensorPtr _sensor, sdf::ElementPtr _
   if (impl_->sensor_type_ == GazeboRosCameraPrivate::DEPTH) {
     impl_->min_depth_ = _sdf->Get<double>("min_depth", 0.4).first;
     impl_->max_depth_ =
-      _sdf->Get<double>("max_depth", std::numeric_limits<float>::infinity()).first;
+      _sdf->Get<double>("max_depth", 2.9).first;
 
     // Initialize point cloud message
     impl_->cloud_msg_.fields.resize(4);
