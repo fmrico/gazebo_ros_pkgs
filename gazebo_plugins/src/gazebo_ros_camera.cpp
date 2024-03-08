@@ -179,7 +179,7 @@ void GazeboRosCamera::Load(gazebo::sensors::SensorPtr _sensor, sdf::ElementPtr _
   impl_->camera_name_ = _sdf->Get<std::string>("camera_name", _sensor->Name()).first;
 
   // Get tf frame for output
-  impl_->frame_name_ = gazebo_ros::SensorFrameID(*_sensor, *_sdf);
+  impl_->frame_name_ = "camera_rgb_optical_frame";  // gazebo_ros::SensorFrameID(*_sensor, *_sdf);
 
   if (impl_->sensor_type_ != GazeboRosCameraPrivate::MULTICAMERA) {
     // Image publisher
@@ -658,7 +658,7 @@ void GazeboRosCamera::OnNewDepthFrame(
   // Publish depth image
   sensor_msgs::msg::Image image_msg;
   image_msg.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
-  image_msg.header.frame_id = impl_->frame_name_;
+  image_msg.header.frame_id = "camera_depth_optical_frame";
   image_msg.header.stamp = sensor_update_time;
   image_msg.width = _width;
   image_msg.height = _height;
